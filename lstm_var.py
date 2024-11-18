@@ -906,6 +906,7 @@ def plot_stress_period_analysis_covid(results_df, stress_stats, portfolio_name, 
     return save_path
 
 def main():
+    # Set random seeds for reproducibility
     seed = 42
     random.seed(seed)
     np.random.seed(seed)
@@ -916,13 +917,15 @@ def main():
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         
-    # Set up directories
+    # Set up directories - Modified path handling
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(current_dir, "data", "data")
+    data_dir = os.path.join(current_dir, "data", 'data')  # Removed nested "data" directory
     results_dir = os.path.join(current_dir, "results")
     plots_dir = os.path.join(results_dir, "plots")
     covid_analysis_dir = os.path.join(results_dir, "covid_analysis")
     
+    # Create directories if they don't exist
+    os.makedirs(data_dir, exist_ok=True)
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(plots_dir, exist_ok=True)
     os.makedirs(covid_analysis_dir, exist_ok=True)
@@ -932,9 +935,15 @@ def main():
     rolling_window = 252  # 1-year rolling window
     confidence_level = 0.95
     
-    # Load data
+    # Load data - Updated file paths
     data_path = os.path.join(data_dir, "sp500_adjusted_close_cleaned.csv")
     market_caps_path = os.path.join(data_dir, "sp500_market_caps.csv")
+    
+    # Check if required files exist
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Required file not found: {data_path}")
+    if not os.path.exists(market_caps_path):
+        raise FileNotFoundError(f"Required file not found: {market_caps_path}")
     
     print("Loading data...")
     data = pd.read_csv(data_path)
