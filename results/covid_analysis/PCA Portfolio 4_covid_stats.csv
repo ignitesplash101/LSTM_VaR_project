@@ -1,0 +1,21 @@
+,0
+Stress_Period_Returns_Mean,-0.018939156760373686
+Stress_Period_Returns_Std,0.05193918946003481
+Stress_Period_Worst_Loss,-0.1389737204697412
+Historical_VaR_Breaches,13
+Historical_VaR_Breach_Rate,54.166666666666664
+LSTM_VaR_Breaches,6
+LSTM_VaR_Breach_Rate,25.0
+Pre_Stress_Historical_VaR_Mean,-0.01837846829435445
+Stress_Historical_VaR_Mean,-0.01433207911961864
+Pre_Stress_LSTM_VaR_Mean,-0.04475401522391645
+Stress_LSTM_VaR_Mean,-0.06076816940464991
+Historical_VaR_Change_Pct,-22.017009850482427
+LSTM_VaR_Change_Pct,35.78260877959287
+LSTM_Prediction_MSE,0.002086107331912354
+LSTM_Prediction_MAE,0.030784808355286825
+LSTM_Prediction_RMSE,0.045673923981987295
+Training_Start_Date,2009-11-24 00:00:00
+Training_End_Date,2020-01-17 00:00:00
+Training_Days,2554
+Training_Years,10.134920634920634

@@ -1,0 +1,403 @@
+Symbol,MarketCap,Sector,Industry,SubIndustry
+MMM,70678306816.0,Industrials,Conglomerates,Other
+AOS,10472989696.0,Industrials,Specialty Industrial Machinery,Other
+ABT,201023913984.0,Healthcare,Medical Devices,Other
+ACN,220930342912.0,Technology,Information Technology Services,Other
+AMD,218917060608.0,Technology,Semiconductors,Other
+AES,9933047808.0,Utilities,Utilities - Diversified,Other
+AFL,61841375232.0,Financial Services,Insurance - Life,Other
+APD,70495772672.0,Basic Materials,Specialty Chemicals,Other
+AKAM,13134347264.0,Technology,Software - Infrastructure,Other
+ALB,12168915968.0,Basic Materials,Specialty Chemicals,Other
+ARE,18451372032.0,Real Estate,REIT - Office,Other
+ALGN,16699153408.0,Healthcare,Medical Instruments & Supplies,Other
+LNT,15647407104.0,Utilities,Utilities - Regulated Electric,Other
+ALL,52134416384.0,Financial Services,Insurance - Property & Casualty,Other
+GOOGL,2119194902528.0,Communication Services,Internet Content & Information,Other
+GOOG,2119197392896.0,Communication Services,Internet Content & Information,Other
+MO,94790721536.0,Consumer Defensive,Tobacco,Other
+AMZN,2130444156928.0,Consumer Cyclical,Internet Retail,Other
+AEE,24349171712.0,Utilities,Utilities - Regulated Electric,Other
+AEP,51291332608.0,Utilities,Utilities - Regulated Electric,Other
+AXP,202084139008.0,Financial Services,Credit Services,Other
+AIG,47262978048.0,Financial Services,Insurance - Diversified,Other
+AMT,91798921216.0,Real Estate,REIT - Specialty,Other
+AWK,26160621568.0,Utilities,Utilities - Regulated Water,Other
+AMP,54564892672.0,Financial Services,Asset Management,Other
+AME,44665577472.0,Industrials,Specialty Industrial Machinery,Other
+AMGN,152449728512.0,Healthcare,Drug Manufacturers - General,Other
+APH,85019615232.0,Technology,Electronic Components,Other
+ADI,102451331072.0,Technology,Semiconductors,Other
+ANSS,29066631168.0,Technology,Software - Application,Other
+AON,82027536384.0,Financial Services,Insurance Brokers,Other
+AAPL,3401054945280.0,Technology,Consumer Electronics,Other
+AMAT,139225350144.0,Technology,Semiconductor Equipment & Materials,Other
+ACGL,38312722432.0,Financial Services,Insurance - Diversified,Other
+ADM,25508876288.0,Consumer Defensive,Farm Products,Other
+AJG,64644399104.0,Financial Services,Insurance Brokers,Other
+AIZ,11222709248.0,Financial Services,Insurance - Property & Casualty,Other
+T,162735570944.0,Communication Services,Telecom Services,Other
+ATO,22491707392.0,Utilities,Utilities - Regulated Gas,Other
+ADSK,64469512192.0,Technology,Software - Application,Other
+ADP,121275506688.0,Technology,Software - Application,Other
+AZO,52530618368.0,Consumer Cyclical,Specialty Retail,Other
+AVB,32630589440.0,Real Estate,REIT - Residential,Other
+AVY,15886893056.0,Consumer Cyclical,Packaging & Containers,Other
+AXON,45703311360.0,Industrials,Aerospace & Defense,Other
+BALL,18180110336.0,Consumer Cyclical,Packaging & Containers,Other
+BAC,358707134464.0,Financial Services,Banks - Diversified,Other
+BAX,16318392320.0,Healthcare,Medical Instruments & Supplies,Other
+BDX,65077800960.0,Healthcare,Medical Instruments & Supplies,Other
+BBY,19896418304.0,Consumer Cyclical,Specialty Retail,Other
+TECH,10736332800.0,Healthcare,Biotechnology,Other
+BIIB,23313584128.0,Healthcare,Drug Manufacturers - General,Other
+BLK,155144814592.0,Financial Services,Asset Management,Other
+BX,220028567552.0,Financial Services,Asset Management,Other
+BK,56922939392.0,Financial Services,Banks - Diversified,Other
+BKNG,164662362112.0,Consumer Cyclical,Travel Services,Other
+BWA,7545149952.0,Consumer Cyclical,Auto Parts,Other
+BSX,128208470016.0,Healthcare,Medical Devices,Other
+BMY,114024284160.0,Healthcare,Drug Manufacturers - General,Other
+AVGO,769898446848.0,Technology,Semiconductors,Other
+BR,26624976896.0,Technology,Information Technology Services,Other
+BRO,31469680640.0,Financial Services,Insurance Brokers,Other
+BLDR,20287182848.0,Industrials,Building Products & Equipment,Other
+BG,12650206208.0,Consumer Defensive,Farm Products,Other
+BXP,13850649600.0,Real Estate,REIT - Office,Other
+CHRW,13025009664.0,Industrials,Integrated Freight & Logistics,Other
+CDNS,79456731136.0,Technology,Software - Application,Other
+CPT,12777183232.0,Real Estate,REIT - Residential,Other
+CPB,12842130432.0,Consumer Defensive,Packaged Foods,Other
+CAH,28745947136.0,Healthcare,Medical Distribution,Other
+KMX,12088719360.0,Consumer Cyclical,Auto & Truck Dealerships,Other
+CCL,32620371968.0,Consumer Cyclical,Travel Services,Other
+CAT,185429753856.0,Industrials,Farm & Heavy Construction Machinery,Other
+CBOE,21011527680.0,Financial Services,Financial Data & Stock Exchanges,Other
+CBRE,39852720128.0,Real Estate,Real Estate Services,Other
+CE,8065039360.0,Basic Materials,Chemicals,Other
+COR,47088963584.0,Healthcare,Medical Distribution,Other
+CNC,29009541120.0,Healthcare,Healthcare Plans,Other
+CNP,20112293888.0,Utilities,Utilities - Regulated Electric,Other
+CF,15151921152.0,Basic Materials,Agricultural Inputs,Other
+CRL,9600310272.0,Healthcare,Diagnostics & Research,Other
+SCHW,147616350208.0,Financial Services,Capital Markets,Other
+CHTR,55389908992.0,Communication Services,Telecom Services,Other
+CVX,287798919168.0,Energy,Oil & Gas Integrated,Other
+CMG,79888654336.0,Consumer Cyclical,Restaurants,Other
+CHD,26709680128.0,Consumer Defensive,Household & Personal Products,Other
+CI,89431744512.0,Healthcare,Healthcare Plans,Other
+CINF,23725492224.0,Financial Services,Insurance - Property & Casualty,Other
+CTAS,86789947392.0,Industrials,Specialty Business Services,Other
+CSCO,229036703744.0,Technology,Communication Equipment,Other
+C,130043043840.0,Financial Services,Banks - Diversified,Other
+CLX,20750647296.0,Consumer Defensive,Household & Personal Products,Other
+CME,81182351360.0,Financial Services,Financial Data & Stock Exchanges,Other
+CMS,20386101248.0,Utilities,Utilities - Regulated Electric,Other
+CTSH,38232989696.0,Technology,Information Technology Services,Other
+CMCSA,164082040832.0,Communication Services,Telecom Services,Other
+CAG,12743189504.0,Consumer Defensive,Packaged Foods,Other
+COP,129270202368.0,Energy,Oil & Gas E&P,Other
+ED,33407973376.0,Utilities,Utilities - Regulated Electric,Other
+STZ,43128729600.0,Consumer Defensive,Beverages - Brewers,Other
+COO,19841910784.0,Healthcare,Medical Instruments & Supplies,Other
+CPRT,54594457600.0,Industrials,Specialty Business Services,Other
+GLW,39805157376.0,Technology,Electronic Components,Other
+CSGP,29209649152.0,Real Estate,Real Estate Services,Other
+COST,401899126784.0,Consumer Defensive,Discount Stores,Other
+CTRA,18842560512.0,Energy,Oil & Gas E&P,Other
+CCI,45111275520.0,Real Estate,REIT - Specialty,Other
+CSX,67745394688.0,Industrials,Railroads,Other
+CMI,49639309312.0,Industrials,Specialty Industrial Machinery,Other
+CVS,66934824960.0,Healthcare,Healthcare Plans,Other
+DHR,166484393984.0,Healthcare,Diagnostics & Research,Other
+DRI,19596650496.0,Consumer Cyclical,Restaurants,Other
+DVA,13150908416.0,Healthcare,Medical Care Facilities,Other
+DECK,26686619648.0,Consumer Cyclical,Footwear & Accessories,Other
+DAL,41343156224.0,Industrials,Airlines,Other
+DVN,25270941696.0,Energy,Oil & Gas E&P,Other
+DXCM,29638348800.0,Healthcare,Medical Devices,Other
+DLR,60748042240.0,Real Estate,REIT - Specialty,Other
+DFS,44206247936.0,Financial Services,Credit Services,Other
+DG,16687150080.0,Consumer Defensive,Discount Stores,Other
+DLTR,13802485760.0,Consumer Defensive,Discount Stores,Other
+D,48409776128.0,Utilities,Utilities - Regulated Electric,Other
+DPZ,14863608832.0,Consumer Cyclical,Restaurants,Other
+DOV,27600285696.0,Industrials,Specialty Industrial Machinery,Other
+DHI,52366004224.0,Consumer Cyclical,Residential Construction,Other
+DTE,24870756352.0,Utilities,Utilities - Regulated Electric,Other
+DUK,86649298944.0,Utilities,Utilities - Regulated Electric,Other
+DD,34209615872.0,Basic Materials,Specialty Chemicals,Other
+EMN,11777920000.0,Basic Materials,Specialty Chemicals,Other
+ETN,141872840704.0,Industrials,Specialty Industrial Machinery,Other
+EBAY,29424969728.0,Consumer Cyclical,Internet Retail,Other
+ECL,69442650112.0,Basic Materials,Specialty Chemicals,Other
+EIX,32396713984.0,Utilities,Utilities - Regulated Electric,Other
+EW,39964848128.0,Healthcare,Medical Devices,Other
+EA,42320371712.0,Communication Services,Electronic Gaming & Multimedia,Other
+EMR,72289951744.0,Industrials,Specialty Industrial Machinery,Other
+ETR,31972519936.0,Utilities,Utilities - Regulated Electric,Other
+EOG,75683266560.0,Energy,Oil & Gas E&P,Other
+EQT,25484374016.0,Energy,Oil & Gas E&P,Other
+EFX,30773563392.0,Industrials,Consulting Services,Other
+EQIX,86585614336.0,Real Estate,REIT - Specialty,Other
+EQR,28780531712.0,Real Estate,REIT - Residential,Other
+ERIE,21177409536.0,Financial Services,Insurance Brokers,Other
+ESS,20097185792.0,Real Estate,REIT - Residential,Other
+EL,22884845568.0,Consumer Defensive,Household & Personal Products,Other
+EG,15959242752.0,Financial Services,Insurance - Reinsurance,Other
+EVRG,14663269376.0,Utilities,Utilities - Regulated Electric,Other
+ES,22661961728.0,Utilities,Utilities - Regulated Electric,Other
+EXC,39298904064.0,Utilities,Utilities - Regulated Electric,Other
+EXPE,23275548672.0,Consumer Cyclical,Travel Services,Other
+EXPD,16819516416.0,Industrials,Integrated Freight & Logistics,Other
+EXR,36295516160.0,Real Estate,REIT - Industrial,Other
+XOM,524378177536.0,Energy,Oil & Gas Integrated,Other
+FFIV,13847285760.0,Technology,Software - Infrastructure,Other
+FDS,18382780416.0,Financial Services,Financial Data & Stock Exchanges,Other
+FICO,55050600448.0,Technology,Software - Application,Other
+FAST,46890721280.0,Industrials,Industrial Distribution,Other
+FRT,9718183936.0,Real Estate,REIT - Retail,Other
+FDX,71943348224.0,Industrials,Integrated Freight & Logistics,Other
+FIS,47278247936.0,Technology,Information Technology Services,Other
+FITB,31508815872.0,Financial Services,Banks - Regional,Other
+FSLR,20389195776.0,Technology,Solar,Other
+FE,23922917376.0,Utilities,Utilities - Regulated Electric,Other
+FI,119996391424.0,Technology,Information Technology Services,Other
+FMC,6789830144.0,Basic Materials,Agricultural Inputs,Other
+F,43756933120.0,Consumer Cyclical,Auto Manufacturers,Other
+FTNT,72199872512.0,Technology,Software - Infrastructure,Other
+BEN,11347886080.0,Financial Services,Asset Management,Other
+FCX,61356912640.0,Basic Materials,Copper,Other
+GRMN,40023769088.0,Technology,Scientific & Technical Instruments,Other
+IT,40330440704.0,Technology,Information Technology Services,Other
+GE,191489572864.0,Industrials,Aerospace & Defense,Other
+GEN,18227343360.0,Technology,Software - Infrastructure,Other
+GNRC,10817799168.0,Industrials,Specialty Industrial Machinery,Other
+GD,79188320256.0,Industrials,Aerospace & Defense,Other
+GIS,35091599360.0,Consumer Defensive,Packaged Foods,Other
+GPC,17048594432.0,Consumer Cyclical,Auto Parts,Other
+GILD,110170267648.0,Healthcare,Drug Manufacturers - General,Other
+GPN,29521420288.0,Industrials,Specialty Business Services,Other
+GL,9166804992.0,Financial Services,Insurance - Life,Other
+GS,186318143488.0,Financial Services,Capital Markets,Other
+HAL,26082725888.0,Energy,Oil & Gas Equipment & Services,Other
+HIG,34192644096.0,Financial Services,Insurance - Property & Casualty,Other
+HAS,8678356992.0,Consumer Cyclical,Leisure,Other
+HSIC,8573065728.0,Healthcare,Medical Distribution,Other
+HSY,34586517504.0,Consumer Defensive,Confectioners,Other
+HES,44874309632.0,Energy,Oil & Gas E&P,Other
+HOLX,18256578560.0,Healthcare,Medical Instruments & Supplies,Other
+HD,405442330624.0,Consumer Cyclical,Home Improvement Retail,Other
+HON,148900052992.0,Industrials,Conglomerates,Other
+HST,12229211136.0,Real Estate,REIT - Hotel & Motel,Other
+HPQ,35376340992.0,Technology,Computer Hardware,Other
+HUBB,23486746624.0,Industrials,Electrical Equipment & Parts,Other
+HUM,33193701376.0,Healthcare,Healthcare Plans,Other
+HBAN,25700208640.0,Financial Services,Banks - Regional,Other
+IBM,189542989824.0,Technology,Information Technology Services,Other
+IEX,17252038656.0,Industrials,Specialty Industrial Machinery,Other
+IDXX,34466091008.0,Healthcare,Diagnostics & Research,Other
+INCY,14616355840.0,Healthcare,Biotechnology,Other
+PODD,18246064128.0,Healthcare,Medical Devices,Other
+INTC,105021546496.0,Technology,Semiconductors,Other
+ICE,89313239040.0,Financial Services,Financial Data & Stock Exchanges,Other
+IFF,22024448000.0,Basic Materials,Specialty Chemicals,Other
+IP,20003753984.0,Consumer Cyclical,Packaging & Containers,Other
+IPG,10091269120.0,Communication Services,Advertising Agencies,Other
+INTU,192804454400.0,Technology,Software - Application,Other
+ISRG,187923595264.0,Healthcare,Medical Instruments & Supplies,Other
+IVZ,7941604864.0,Financial Services,Asset Management,Other
+IRM,33712683008.0,Real Estate,REIT - Specialty,Other
+JBHT,18386352128.0,Industrials,Integrated Freight & Logistics,Other
+JBL,14473242624.0,Technology,Electronic Components,Other
+JKHY,12637280256.0,Technology,Information Technology Services,Other
+JCI,56380383232.0,Industrials,Building Products & Equipment,Other
+JPM,690631081984.0,Financial Services,Banks - Diversified,Other
+JNPR,12088058880.0,Technology,Communication Equipment,Other
+K,27772315648.0,Consumer Defensive,Packaged Foods,Other
+KDP,42945208320.0,Consumer Defensive,Beverages - Non-Alcoholic,Other
+KMB,44713668608.0,Consumer Defensive,Household & Personal Products,Other
+KIM,16777876480.0,Real Estate,REIT - Retail,Other
+KKR,138438164480.0,Financial Services,Asset Management,Other
+KLAC,82190172160.0,Technology,Semiconductor Equipment & Materials,Other
+KR,41976659968.0,Consumer Defensive,Grocery Stores,Other
+LHX,46847995904.0,Industrials,Aerospace & Defense,Other
+LH,19672799232.0,Healthcare,Diagnostics & Research,Other
+LRCX,90132643840.0,Technology,Semiconductor Equipment & Materials,Other
+LVS,34772246528.0,Consumer Cyclical,Resorts & Casinos,Other
+LDOS,21436010496.0,Technology,Information Technology Services,Other
+LEN,45497311232.0,Consumer Cyclical,Residential Construction,Other
+LLY,708379607040.0,Healthcare,Drug Manufacturers - General,Other
+LIN,213842575360.0,Basic Materials,Specialty Chemicals,Other
+LYV,29747271680.0,Communication Services,Entertainment,Other
+LKQ,9930472448.0,Consumer Cyclical,Auto Parts,Other
+LMT,126773436416.0,Industrials,Aerospace & Defense,Other
+L,18120996864.0,Financial Services,Insurance - Property & Casualty,Other
+LOW,152829001728.0,Consumer Cyclical,Home Improvement Retail,Other
+LULU,39289868288.0,Consumer Cyclical,Apparel Retail,Other
+LYB,26841165824.0,Basic Materials,Specialty Chemicals,Other
+MTB,35629875200.0,Financial Services,Banks - Regional,Other
+MRO,15993531392.0,Energy,Oil & Gas E&P,Other
+MKTX,9865356288.0,Financial Services,Capital Markets,Other
+MAR,77471006720.0,Consumer Cyclical,Lodging,Other
+MMC,109097836544.0,Financial Services,Insurance Brokers,Other
+MLM,35633688576.0,Basic Materials,Building Materials,Other
+MAS,16919035904.0,Industrials,Building Products & Equipment,Other
+MA,479006818304.0,Financial Services,Credit Services,Other
+MTCH,7711004672.0,Communication Services,Internet Content & Information,Other
+MKC,19854954496.0,Consumer Defensive,Packaged Foods,Other
+MCD,209704517632.0,Consumer Cyclical,Restaurants,Other
+MCK,76962447360.0,Healthcare,Medical Distribution,Other
+MDT,112265969664.0,Healthcare,Medical Devices,Other
+MRK,243629621248.0,Healthcare,Drug Manufacturers - General,Other
+MET,57699356672.0,Financial Services,Insurance - Life,Other
+MTD,24892321792.0,Healthcare,Diagnostics & Research,Other
+MGM,11099747328.0,Consumer Cyclical,Resorts & Casinos,Other
+MCHP,33756448768.0,Technology,Semiconductors,Other
+MU,106816004096.0,Technology,Semiconductors,Other
+MSFT,3085475250176.0,Technology,Software - Infrastructure,Other
+MAA,18963843072.0,Real Estate,REIT - Residential,Other
+MHK,8857811968.0,Consumer Cyclical,"Furnishings, Fixtures & Appliances",Other
+MOH,16836247552.0,Healthcare,Healthcare Plans,Other
+TAP,12853151744.0,Consumer Defensive,Beverages - Brewers,Other
+MDLZ,86235381760.0,Consumer Defensive,Confectioners,Other
+MPWR,27969476608.0,Technology,Semiconductors,Other
+MNST,50571038720.0,Consumer Defensive,Beverages - Non-Alcoholic,Other
+MS,215976017920.0,Financial Services,Capital Markets,Other
+MSI,81722163200.0,Technology,Communication Equipment,Other
+MSCI,46541578240.0,Financial Services,Financial Data & Stock Exchanges,Other
+NDAQ,45267943424.0,Financial Services,Financial Data & Stock Exchanges,Other
+NFLX,352208289792.0,Communication Services,Entertainment,Other
+NEE,157006135296.0,Utilities,Utilities - Regulated Electric,Other
+NKE,114108416000.0,Consumer Cyclical,Footwear & Accessories,Other
+NI,17070108672.0,Utilities,Utilities - Regulated Gas,Other
+NDSN,14568702976.0,Industrials,Specialty Industrial Machinery,Other
+NSC,59107463168.0,Industrials,Railroads,Other
+NTRS,21328257024.0,Financial Services,Asset Management,Other
+NOC,71971872768.0,Industrials,Aerospace & Defense,Other
+NRG,18674561024.0,Utilities,Utilities - Independent Power Producers,Other
+NUE,34536296448.0,Basic Materials,Steel,Other
+NVDA,3482769162240.0,Technology,Semiconductors,Other
+NVR,27654580224.0,Consumer Cyclical,Residential Construction,Other
+NXPI,55162015744.0,Technology,Semiconductors,Other
+ORLY,70048702464.0,Consumer Cyclical,Specialty Retail,Other
+OXY,46889000960.0,Energy,Oil & Gas E&P,Other
+ODFL,46023766016.0,Industrials,Trucking,Other
+OMC,18896707584.0,Communication Services,Advertising Agencies,Other
+ON,27574614016.0,Technology,Semiconductors,Other
+OKE,64149241856.0,Energy,Oil & Gas Midstream,Other
+ORCL,509154557952.0,Technology,Software - Infrastructure,Other
+PCAR,58858029056.0,Industrials,Farm & Heavy Construction Machinery,Other
+PKG,21176891392.0,Consumer Cyclical,Packaging & Containers,Other
+PARA,7698091520.0,Communication Services,Entertainment,Other
+PH,89963692032.0,Industrials,Specialty Industrial Machinery,Other
+PAYX,51451019264.0,Technology,Software - Application,Other
+PNR,17501267968.0,Industrials,Specialty Industrial Machinery,Other
+PEP,217625051136.0,Consumer Defensive,Beverages - Non-Alcoholic,Other
+PFE,140541345792.0,Healthcare,Drug Manufacturers - General,Other
+PCG,55025704960.0,Utilities,Utilities - Regulated Electric,Other
+PM,199935574016.0,Consumer Defensive,Tobacco,Other
+PNW,10446755840.0,Utilities,Utilities - Regulated Electric,Other
+PNC,82403893248.0,Financial Services,Banks - Regional,Other
+POOL,13677907968.0,Industrials,Industrial Distribution,Other
+PPG,28426958848.0,Basic Materials,Specialty Chemicals,Other
+PPL,24869588992.0,Utilities,Utilities - Regulated Electric,Other
+PG,399273459712.0,Consumer Defensive,Household & Personal Products,Other
+PGR,149838987264.0,Financial Services,Insurance - Property & Casualty,Other
+PLD,105046761472.0,Real Estate,REIT - Industrial,Other
+PRU,45349171200.0,Financial Services,Insurance - Life,Other
+PEG,44337041408.0,Utilities,Utilities - Regulated Electric,Other
+PTC,22826850304.0,Technology,Software - Application,Other
+PSA,58663264256.0,Real Estate,REIT - Industrial,Other
+PHM,26433017856.0,Consumer Cyclical,Residential Construction,Other
+PWR,47727386624.0,Industrials,Engineering & Construction,Other
+QCOM,178315509760.0,Technology,Semiconductors,Other
+DGX,17907511296.0,Healthcare,Diagnostics & Research,Other
+RJF,32666243072.0,Financial Services,Asset Management,Other
+O,49484431360.0,Real Estate,REIT - Retail,Other
+REG,13450464256.0,Real Estate,REIT - Retail,Other
+REGN,83165847552.0,Healthcare,Biotechnology,Other
+RSG,65148141568.0,Industrials,Waste Management,Other
+RMD,34458894336.0,Healthcare,Medical Instruments & Supplies,Other
+RVTY,13328802816.0,Healthcare,Diagnostics & Research,Other
+ROK,32305475584.0,Industrials,Specialty Industrial Machinery,Other
+ROL,24171661312.0,Consumer Cyclical,Personal Services,Other
+ROP,58786152448.0,Technology,Software - Application,Other
+RCL,62241878016.0,Consumer Cyclical,Travel Services,Other
+SPGI,156170895360.0,Financial Services,Financial Data & Stock Exchanges,Other
+CRM,310948560896.0,Technology,Software - Application,Other
+SBAC,23772260352.0,Real Estate,REIT - Specialty,Other
+SLB,60976640000.0,Energy,Oil & Gas Equipment & Services,Other
+STX,20473989120.0,Technology,Computer Hardware,Other
+SRE,58393051136.0,Utilities,Utilities - Diversified,Other
+SPG,67686518784.0,Real Estate,REIT - Retail,Other
+SWKS,13366632448.0,Technology,Semiconductors,Other
+SJM,11376929792.0,Consumer Defensive,Packaged Foods,Other
+SNA,18748293120.0,Industrials,Tools & Accessories,Other
+SO,96343146496.0,Utilities,Utilities - Regulated Electric,Other
+LUV,19551426560.0,Industrials,Airlines,Other
+SWK,13173313536.0,Industrials,Tools & Accessories,Other
+SBUX,111559073792.0,Consumer Cyclical,Restaurants,Other
+STT,27990059008.0,Financial Services,Asset Management,Other
+STLD,21224474624.0,Basic Materials,Steel,Other
+STE,21727449088.0,Healthcare,Medical Devices,Other
+SYK,148704739328.0,Healthcare,Medical Devices,Other
+SMCI,10879797248.0,Technology,Computer Hardware,Other
+SNPS,79994486784.0,Technology,Software - Infrastructure,Other
+SYY,36817387520.0,Consumer Defensive,Food Distribution,Other
+TMUS,273423040512.0,Communication Services,Telecom Services,Other
+TTWO,31194867712.0,Communication Services,Electronic Gaming & Multimedia,Other
+TPR,13336649728.0,Consumer Cyclical,Luxury Goods,Other
+TGT,70082494464.0,Consumer Defensive,Discount Stores,Other
+TEL,44380680192.0,Technology,Electronic Components,Other
+TDY,21910071296.0,Technology,Scientific & Technical Instruments,Other
+TFX,8924156928.0,Healthcare,Medical Instruments & Supplies,Other
+TER,16706280448.0,Technology,Semiconductor Equipment & Materials,Other
+TSLA,1029530451968.0,Consumer Cyclical,Auto Manufacturers,Other
+TXN,183465082880.0,Technology,Semiconductors,Other
+TXT,15751824384.0,Industrials,Aerospace & Defense,Other
+TSCO,29451239424.0,Consumer Cyclical,Specialty Retail,Other
+TDG,70521921536.0,Industrials,Aerospace & Defense,Other
+TRV,59211100160.0,Financial Services,Insurance - Property & Casualty,Other
+TRMB,17245970432.0,Technology,Scientific & Technical Instruments,Other
+TFC,61796052992.0,Financial Services,Banks - Regional,Other
+TYL,25555042304.0,Technology,Software - Application,Other
+TSN,22889172992.0,Consumer Defensive,Farm Products,Other
+USB,77845495808.0,Financial Services,Banks - Regional,Other
+UDR,16645494784.0,Real Estate,REIT - Residential,Other
+ULTA,17204875264.0,Consumer Cyclical,Specialty Retail,Other
+UNP,142815969280.0,Industrials,Railroads,Other
+UAL,29983625216.0,Industrials,Airlines,Other
+UPS,114411323392.0,Industrials,Integrated Freight & Logistics,Other
+UNH,545019789312.0,Healthcare,Healthcare Plans,Other
+VLO,44372553728.0,Energy,Oil & Gas Refining & Marketing,Other
+VTR,26680899584.0,Real Estate,REIT - Healthcare Facilities,Other
+VRSN,17382567936.0,Technology,Software - Infrastructure,Other
+VRSK,39652048896.0,Industrials,Consulting Services,Other
+VZ,175331098624.0,Communication Services,Telecom Services,Other
+VRTX,119931256832.0,Healthcare,Biotechnology,Other
+VTRS,15313760256.0,Healthcare,Drug Manufacturers - Specialty & Generic,Other
+V,599206068224.0,Financial Services,Credit Services,Other
+VMC,36881997824.0,Basic Materials,Building Materials,Other
+WRB,23146131456.0,Financial Services,Insurance - Property & Casualty,Other
+GWW,57384902656.0,Industrials,Industrial Distribution,Other
+WAB,33547771904.0,Industrials,Railroads,Other
+WBA,7331952128.0,Healthcare,Pharmaceutical Retailers,Other
+WMT,677222547456.0,Consumer Defensive,Discount Stores,Other
+DIS,208402989056.0,Communication Services,Entertainment,Other
+WBD,22618226688.0,Communication Services,Entertainment,Other
+WM,87457652736.0,Industrials,Waste Management,Other
+WAT,21283991552.0,Healthcare,Diagnostics & Research,Other
+WEC,30996365312.0,Utilities,Utilities - Regulated Electric,Other
+WFC,247514267648.0,Financial Services,Banks - Diversified,Other
+WELL,84698292224.0,Real Estate,REIT - Healthcare Facilities,Other
+WST,22776119296.0,Healthcare,Medical Instruments & Supplies,Other
+WDC,21710462976.0,Technology,Computer Hardware,Other
+WY,22473181184.0,Real Estate,REIT - Specialty,Other
+WMB,68935016448.0,Energy,Oil & Gas Midstream,Other
+WTW,31491670016.0,Financial Services,Insurance Brokers,Other
+WYNN,9964612608.0,Consumer Cyclical,Resorts & Casinos,Other
+XEL,39886848000.0,Utilities,Utilities - Regulated Electric,Other
+YUM,37281226752.0,Consumer Cyclical,Restaurants,Other
+ZBRA,19905236992.0,Technology,Communication Equipment,Other
+ZBH,22403788800.0,Healthcare,Medical Devices,Other
