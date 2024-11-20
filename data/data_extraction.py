@@ -149,11 +149,16 @@ def validate_and_clean_stock_info(stock_info_df):
 
 def save_market_caps(stock_info_df, data_dir):
     """
-    Extract and save market cap information to a separate CSV file
+    Extract and save market cap information to a CSV file, sorted by symbol
     """
     market_caps = stock_info_df[['Symbol', 'MarketCap']].copy()
+    # Sort by Symbol alphabetically
     market_caps = market_caps.sort_values('Symbol')
+    # Drop any rows with null market caps
     market_caps = market_caps.dropna(subset=['MarketCap'])
+    # Ensure MarketCap is integer
+    market_caps['MarketCap'] = market_caps['MarketCap'].astype('Int64')
+    # Save without index
     market_caps.to_csv(os.path.join(data_dir, "sp500_market_caps.csv"), index=False)
     print(f"Saved market cap data for {len(market_caps)} stocks")
     return market_caps
