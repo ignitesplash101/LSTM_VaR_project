@@ -5,7 +5,7 @@ Annual_Return                  0.187836
 Annual_Volatility              0.190055
 Sharpe_Ratio                   0.988325
 Historical_VaR_Breach_Rate     7.282913
-LSTM_VaR_Breach_Rate           6.162465
+LSTM_VaR_Breach_Rate           6.722689
 Skewness                      -0.700786
 Excess_Kurtosis               11.510855
 Max_Drawdown                  -0.137559
@@ -13,18 +13,18 @@ VaR_95_Historical             -0.018472
 
 Risk Metrics Summary:
 Historical_VaR_Breach_Rate        7.282913
-LSTM_VaR_Breach_Rate              6.162465
+LSTM_VaR_Breach_Rate              6.722689
 Avg_Historical_VaR               -0.012746
 Avg_Historical_ES                -0.015959
-Avg_LSTM_VaR                     -0.013311
-Avg_LSTM_ES                      -0.017021
-LSTM_Prediction_MAE               0.006650
+Avg_LSTM_VaR                     -0.013315
+Avg_LSTM_ES                      -0.017014
+LSTM_Prediction_MAE               0.006637
 LSTM_Prediction_MSE               0.000083
-LSTM_Prediction_Std               0.002916
+LSTM_Prediction_Std               0.002964
 Actual_Returns_Std                0.008261
-LSTM_VaR_Coverage_Ratio           1.232493
+LSTM_VaR_Coverage_Ratio           1.344538
 Historical_VaR_Coverage_Ratio     1.456583
-LSTM_ES_vs_Historical_ES_Ratio    1.066564
+LSTM_ES_vs_Historical_ES_Ratio    1.066165
 
 Portfolio Composition:
        Stock    Weight  Risk_Contribution  Expected_Shortfall_Contribution  Weight_Percentage

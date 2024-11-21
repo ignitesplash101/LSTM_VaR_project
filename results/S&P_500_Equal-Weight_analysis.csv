@@ -16,15 +16,15 @@ Historical_VaR_Breach_Rate        5.602241
 LSTM_VaR_Breach_Rate              5.042017
 Avg_Historical_VaR               -0.011506
 Avg_Historical_ES                -0.014055
-Avg_LSTM_VaR                     -0.013837
-Avg_LSTM_ES                      -0.017496
-LSTM_Prediction_MAE               0.006286
+Avg_LSTM_VaR                     -0.013833
+Avg_LSTM_ES                      -0.017505
+LSTM_Prediction_MAE               0.006288
 LSTM_Prediction_MSE               0.000067
-LSTM_Prediction_Std               0.003494
+LSTM_Prediction_Std               0.003463
 Actual_Returns_Std                0.007282
 LSTM_VaR_Coverage_Ratio           1.008403
 Historical_VaR_Coverage_Ratio     1.120448
-LSTM_ES_vs_Historical_ES_Ratio    1.244852
+LSTM_ES_vs_Historical_ES_Ratio    1.245468
 
 Portfolio Composition:
        Stock    Weight  Risk_Contribution  Expected_Shortfall_Contribution  Weight_Percentage
