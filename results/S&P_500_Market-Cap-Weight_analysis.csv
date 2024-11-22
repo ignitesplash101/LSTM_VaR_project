@@ -1,30 +1,36 @@
 Portfolio: S&P 500 (Market-Cap-Weight)
 
 Portfolio Statistics:
-Annual_Return                  0.187836
-Annual_Volatility              0.190055
-Sharpe_Ratio                   0.988325
-Historical_VaR_Breach_Rate     3.968254
-LSTM_VaR_Breach_Rate           3.968254
-Skewness                      -0.700786
-Excess_Kurtosis               11.510855
-Max_Drawdown                  -0.137559
-VaR_95_Historical             -0.018472
+Annual_Return                 0.251956
+Annual_Volatility             0.141806
+Sharpe_Ratio                  1.776763
+Historical_VaR_Breach_Rate    3.968254
+LSTM_VaR_Breach_Rate          3.968254
+MonteCarlo_VaR_Breach_Rate    7.142857
+Skewness                     -0.626498
+Excess_Kurtosis               1.977673
+Max_Drawdown                 -0.032396
+VaR_95_Historical            -0.014734
 
 Risk Metrics Summary:
-Historical_VaR_Breach_Rate        3.968254
-LSTM_VaR_Breach_Rate              3.968254
-Avg_Historical_VaR               -0.018974
-Avg_Historical_ES                -0.027746
-Avg_LSTM_VaR                     -0.016984
-Avg_LSTM_ES                      -0.021064
-LSTM_Prediction_MAE               0.007132
-LSTM_Prediction_MSE               0.000094
-LSTM_Prediction_Std               0.001870
-Actual_Returns_Std                0.008933
-LSTM_VaR_Coverage_Ratio           0.793651
-Historical_VaR_Coverage_Ratio     0.793651
-LSTM_ES_vs_Historical_ES_Ratio    0.759145
+Historical_VaR_Breach_Rate              3.968254
+LSTM_VaR_Breach_Rate                    3.968254
+MonteCarlo_VaR_Breach_Rate              7.142857
+Avg_Historical_VaR                     -0.018974
+Avg_Historical_ES                      -0.027746
+Avg_LSTM_VaR                           -0.017485
+Avg_LSTM_ES                            -0.020947
+Avg_MonteCarlo_VaR                     -0.012111
+Avg_MonteCarlo_ES                      -0.015536
+LSTM_Prediction_MAE                     0.008197
+LSTM_Prediction_MSE                     0.000105
+LSTM_Prediction_Std                     0.001092
+Actual_Returns_Std                      0.008933
+LSTM_VaR_Coverage_Ratio                 0.793651
+MonteCarlo_VaR_Coverage_Ratio           1.428571
+Historical_VaR_Coverage_Ratio           0.793651
+LSTM_ES_vs_Historical_ES_Ratio          0.754937
+MonteCarlo_ES_vs_Historical_ES_Ratio    0.559919
 
 Portfolio Composition:
        Stock    Weight  Risk_Contribution  Expected_Shortfall_Contribution  Weight_Percentage

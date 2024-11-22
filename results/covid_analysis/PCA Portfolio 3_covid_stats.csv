@@ -2,20 +2,18 @@
 Stress_Period_Returns_Mean,-0.020304230807031424
 Stress_Period_Returns_Std,0.05508234917509584
 Stress_Period_Worst_Loss,-0.1452333620984511
-Historical_VaR_Breaches,12
+Historical_VaR_Breaches,12.0
 Historical_VaR_Breach_Rate,50.0
-LSTM_VaR_Breaches,11
-LSTM_VaR_Breach_Rate,45.83333333333333
+LSTM_VaR_Breaches,4.0
+LSTM_VaR_Breach_Rate,16.666666666666664
+MonteCarlo_VaR_Breaches,12.0
+MonteCarlo_VaR_Breach_Rate,50.0
 Pre_Stress_Historical_VaR_Mean,-0.01490646595501401
 Stress_Historical_VaR_Mean,-0.01430581921948359
-Pre_Stress_LSTM_VaR_Mean,-0.021703666718582433
-Stress_LSTM_VaR_Mean,-0.03323830654995539
+Pre_Stress_LSTM_VaR_Mean,-0.058930930912626224
+Stress_LSTM_VaR_Mean,-0.08501633293247172
+Pre_Stress_MonteCarlo_VaR_Mean,-0.024180897084289766
+Stress_MonteCarlo_VaR_Mean,-0.018897254239587602
 Historical_VaR_Change_Pct,-4.029437543030667
-LSTM_VaR_Change_Pct,53.146042007257364
-LSTM_Prediction_MSE,0.0019171223488158588
-LSTM_Prediction_MAE,0.03028261781796005
-LSTM_Prediction_RMSE,0.04378495573614137
-Training_Start_Date,2009-11-27 00:00:00
-Training_End_Date,2020-01-17 00:00:00
-Training_Days,2552
-Training_Years,10.126984126984127
+LSTM_VaR_Change_Pct,44.26436442777555
+MonteCarlo_VaR_Change_Pct,-21.85048315736361

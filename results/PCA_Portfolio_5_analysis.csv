@@ -1,30 +1,36 @@
 Portfolio: PCA Portfolio 5
 
 Portfolio Statistics:
-Annual_Return                  0.117624
-Annual_Volatility              0.198081
-Sharpe_Ratio                   0.593818
-Historical_VaR_Breach_Rate     1.587302
-LSTM_VaR_Breach_Rate           1.587302
-Skewness                      -1.039279
-Excess_Kurtosis               18.619648
-Max_Drawdown                  -0.152750
-VaR_95_Historical             -0.018338
+Annual_Return                 0.134196
+Annual_Volatility             0.127993
+Sharpe_Ratio                  1.048466
+Historical_VaR_Breach_Rate    1.587302
+LSTM_VaR_Breach_Rate          4.761905
+MonteCarlo_VaR_Breach_Rate    4.761905
+Skewness                     -0.119087
+Excess_Kurtosis               1.281559
+Max_Drawdown                 -0.025220
+VaR_95_Historical            -0.011543
 
 Risk Metrics Summary:
-Historical_VaR_Breach_Rate        1.587302
-LSTM_VaR_Breach_Rate              1.587302
-Avg_Historical_VaR               -0.018388
-Avg_Historical_ES                -0.025428
-Avg_LSTM_VaR                     -0.022222
-Avg_LSTM_ES                      -0.025973
-LSTM_Prediction_MAE               0.009444
-LSTM_Prediction_MSE               0.000131
-LSTM_Prediction_Std               0.001444
-Actual_Returns_Std                0.008063
-LSTM_VaR_Coverage_Ratio           0.317460
-Historical_VaR_Coverage_Ratio     0.317460
-LSTM_ES_vs_Historical_ES_Ratio    1.021434
+Historical_VaR_Breach_Rate              1.587302
+LSTM_VaR_Breach_Rate                    4.761905
+MonteCarlo_VaR_Breach_Rate              4.761905
+Avg_Historical_VaR                     -0.018388
+Avg_Historical_ES                      -0.025428
+Avg_LSTM_VaR                           -0.015720
+Avg_LSTM_ES                            -0.019865
+Avg_MonteCarlo_VaR                     -0.012280
+Avg_MonteCarlo_ES                      -0.015525
+LSTM_Prediction_MAE                     0.008013
+LSTM_Prediction_MSE                     0.000122
+LSTM_Prediction_Std                     0.006314
+Actual_Returns_Std                      0.008063
+LSTM_VaR_Coverage_Ratio                 0.952381
+MonteCarlo_VaR_Coverage_Ratio           0.952381
+Historical_VaR_Coverage_Ratio           0.317460
+LSTM_ES_vs_Historical_ES_Ratio          0.781229
+MonteCarlo_ES_vs_Historical_ES_Ratio    0.610540
 
 Portfolio Composition:
        Stock    Weight  Risk_Contribution  Expected_Shortfall_Contribution  Weight_Percentage
