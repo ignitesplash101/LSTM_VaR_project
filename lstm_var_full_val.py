@@ -366,7 +366,7 @@ def calculate_full_valuation_var_es(scenarios, confidence_level=0.95):
     
     return np.array(vars), np.array(es_values)
 
-def analyze_portfolio_var(returns_df, weights, sequence_length=21, backtest_days=378,
+def analyze_portfolio_var(returns_df, weights, sequence_length=252, backtest_days=378,
                         confidence_level=0.95, rolling_window=252, num_scenarios=1000):
     """
     Modified portfolio analysis function using full valuation VaR for LSTM predictions.
@@ -393,7 +393,7 @@ def analyze_portfolio_var(returns_df, weights, sequence_length=21, backtest_days
         hidden_dim=100,
         num_layers=2,
         batch_size=32,
-        patience=15,
+        patience=10,
         max_epochs=200
     )
     
@@ -684,7 +684,7 @@ def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, p
 
 def analyze_covid_stress_period(returns_df, weights, market_event_start='2020-02-18', 
                               market_event_end='2020-03-20', rolling_window=252,
-                              confidence_level=0.95, sequence_length=21, num_scenarios=1000):
+                              confidence_level=0.95, sequence_length=252, num_scenarios=1000):
     """
     Analyze portfolio behavior during COVID-19 stress period with full valuation VaR
     """
@@ -956,7 +956,7 @@ def main():
     
     # Set parameters
     backtest_days = 378  # Approximately 1.5 years of trading days
-    rolling_window = 252  # 1-year rolling window
+    rolling_window = 1008  # 4-year rolling window
     confidence_level = 0.95
     
     # Load data - Updated file paths
