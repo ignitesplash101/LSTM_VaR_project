@@ -43,32 +43,29 @@ class LSTMModel(nn.Module):
 
 def create_sequences(data, sequence_length):
     """
-    Create sequences of data for LSTM input.
+    Create sequences of data for LSTM input with proper reshaping.
     """
     sequences = []
     targets = []
     
-    data = np.array(data).reshape(-1, 1)  # Ensure 2D array
+    if len(data) < sequence_length + 1:
+        raise ValueError(f"Data length ({len(data)}) must be greater than sequence_length ({sequence_length})")
+    
     for i in range(len(data) - sequence_length):
         seq = data[i:(i + sequence_length)]
         target = data[i + sequence_length]
         sequences.append(seq)
         targets.append(target)
     
-    return np.array(sequences), np.array(targets)
+    # Reshape sequences to (n_sequences, sequence_length, 1)
+    sequences = np.array(sequences).reshape(-1, sequence_length, 1)
+    targets = np.array(targets).reshape(-1, 1)
+    
+    return sequences, targets
 
-def create_dynamic_pca_portfolios(returns_df, market_caps_df=None, n_components=5, window_size=252):
+def create_pca_portfolios(returns_df, market_caps_df=None, n_components=5):
     """
-    Create multiple portfolios with rolling PCA windows to capture dynamic market conditions.
-    
-    Parameters:
-    returns_df (pd.DataFrame): DataFrame of asset returns
-    market_caps_df (pd.DataFrame): DataFrame with market capitalization data
-    n_components (int): Number of PCA components to use
-    window_size (int): Size of rolling window in days (default: 252 for 1 year)
-    
-    Returns:
-    tuple: (list of initial portfolio weights, DataFrame of rolling portfolio weights)
+    Create multiple portfolios: Equal-weight S&P 500, Market-cap-weight S&P 500, and PCA portfolios
     """
     portfolios = []
     n_stocks = returns_df.shape[1]
@@ -89,168 +86,49 @@ def create_dynamic_pca_portfolios(returns_df, market_caps_df=None, n_components=
         market_cap_weights = market_caps / np.sum(market_caps)
         portfolios.append(market_cap_weights)
     
-    # Initialize DataFrame for storing rolling PCA portfolio weights
-    rolling_weights = pd.DataFrame(index=returns_df.index[window_size:],
-                                 columns=[f'PCA_Portfolio_{i+1}' for i in range(n_components)])
-    
-    # Initialize storage for component explanations
-    explained_variance_ratios = pd.DataFrame(index=returns_df.index[window_size:],
-                                           columns=[f'Component_{i+1}' for i in range(n_components)])
-    
-    # Calculate rolling PCA portfolios
-    for i in range(window_size, len(returns_df)):
-        # Get window of returns
-        window_returns = returns_df.iloc[i-window_size:i]
-        
-        # Standardize returns in the window
-        scaler = StandardScaler()
-        scaled_returns = scaler.fit_transform(window_returns)
-        
-        # Perform PCA on the window
-        pca = PCA(n_components=n_components)
-        pca.fit(scaled_returns)
-        
-        # Store explained variance ratios
-        explained_variance_ratios.iloc[i-window_size] = pca.explained_variance_ratio_
-        
-        # Create PCA-based portfolios for this window
-        for j in range(n_components):
-            weights = np.abs(pca.components_[j])
-            weights = weights / np.sum(weights)
-            rolling_weights.iloc[i-window_size, j] = weights
-    
-    # Calculate initial PCA portfolios (using first window)
+    # Create PCA portfolios
     scaler = StandardScaler()
-    initial_returns = returns_df.iloc[:window_size]
-    scaled_initial = scaler.fit_transform(initial_returns)
+    scaled_returns = scaler.fit_transform(returns_df)
     
     pca = PCA(n_components=n_components)
-    pca.fit(scaled_initial)
+    pca.fit(scaled_returns)
     
-    # Add initial PCA portfolios to the portfolios list
     for i in range(n_components):
         weights = np.abs(pca.components_[i])
         weights = weights / np.sum(weights)
         portfolios.append(weights)
     
-     # Modified variance summary creation
-    explained_variance_df = pd.DataFrame(
-        explained_variance_ratios,
-        index=returns_df.index[window_size:],
-        columns=[f'Component_{i+1}' for i in range(n_components)]
-    )
-    
-    # Create summary statistics
-    variance_summary = pd.DataFrame({
-        'Component': [f'Component_{i+1}' for i in range(n_components)],
-        'Mean_Explained_Variance': explained_variance_ratios.mean(axis=0),
-        'Std_Explained_Variance': explained_variance_ratios.std(axis=0),
-        'Min_Explained_Variance': explained_variance_ratios.min(axis=0),
-        'Max_Explained_Variance': explained_variance_ratios.max(axis=0)
-    })
-    
-    # Set Component as index
-    variance_summary.set_index('Component', inplace=True)
-    
-    # Calculate turnover for each PCA portfolio
-    portfolio_turnover = pd.DataFrame(index=['Annual_Turnover'],
-                                    columns=[f'PCA_Portfolio_{i+1}' for i in range(n_components)])
-    
-    for i in range(n_components):
-        daily_turnover = np.abs(rolling_weights[f'PCA_Portfolio_{i+1}'].diff()).mean()
-        annual_turnover = daily_turnover * 252  # Annualized turnover
-        portfolio_turnover.iloc[0, i] = annual_turnover
-    
-    return (portfolios, rolling_weights, variance_summary, portfolio_turnover, explained_variance_df)
+    return portfolios
 
-def calculate_dynamic_portfolio_returns(returns_df, initial_weights, rolling_weights):
-    """
-    Calculate portfolio returns using dynamic weights that change over time.
-    
-    Parameters:
-    returns_df (pd.DataFrame): DataFrame of asset returns
-    initial_weights (list): List of initial portfolio weights
-    rolling_weights (pd.DataFrame): DataFrame of rolling portfolio weights
-    
-    Returns:
-    pd.DataFrame: DataFrame of portfolio returns
-    """
-    # Initialize portfolio returns DataFrame with all required columns
-    portfolio_returns = pd.DataFrame(index=returns_df.index)
-    
-    # Initialize all portfolio columns
-    for i in range(len(initial_weights)):
-        portfolio_returns[f'Portfolio_{i}'] = np.nan
-    
-    # Calculate returns for equal-weight and market-cap-weight portfolios (static)
-    for i in range(2):  # First two portfolios are static
-        if i < len(initial_weights):
-            returns = np.dot(returns_df, initial_weights[i])
-            portfolio_returns[f'Portfolio_{i}'] = returns
-    
-    # Calculate returns for dynamic PCA portfolios
-    window_size = len(returns_df) - len(rolling_weights)
-    
-    # Use initial weights for the first window
-    for i in range(2, len(initial_weights)):
-        early_returns = np.dot(returns_df.iloc[:window_size], initial_weights[i])
-        portfolio_returns[f'Portfolio_{i}'].iloc[:window_size] = early_returns
-    
-    # Use rolling weights for the rest of the period
-    for i in range(len(rolling_weights.columns)):
-        portfolio_idx = i + 2  # Offset for the first two static portfolios
-        portfolio_column = f'Portfolio_{portfolio_idx}'
-        
-        for j in range(len(rolling_weights)):
-            date_idx = j + window_size
-            current_weights = rolling_weights.iloc[j, i]
-            
-            # Handle weights stored as string or array
-            if isinstance(current_weights, str):
-                current_weights = np.fromstring(current_weights.strip('[]'), sep=' ')
-            current_weights = np.array(current_weights)
-            
-            # Ensure weights sum to 1
-            current_weights = current_weights / np.sum(current_weights)
-            
-            # Calculate returns
-            returns = np.dot(returns_df.iloc[date_idx], current_weights)
-            portfolio_returns[portfolio_column].iloc[date_idx] = returns
-    
-    return portfolio_returns
 
 def calculate_rolling_var_es(returns, confidence_level=0.95, rolling_window=252):
     """
-    Calculate daily rolling VaR and ES with proper daily updates.
-    
-    Parameters:
-    returns: Array of returns
-    confidence_level: VaR confidence level (default 0.95)
-    rolling_window: Window size in days (default 252 for 1-year rolling window)
-    
-    Returns:
-    Tuple of (VaR array, ES array) with proper daily updates
+    Fixed Historical VaR calculation
     """
     rolling_vars = []
     rolling_es = []
     
-    # Cannot calculate VaR/ES until we have enough data
+    # Ensure we have enough data
+    if len(returns) < rolling_window:
+        raise ValueError(f"Not enough data points. Need at least {rolling_window}, got {len(returns)}")
+    
     for i in range(len(returns)):
         if i < rolling_window - 1:
             rolling_vars.append(np.nan)
             rolling_es.append(np.nan)
             continue
             
-        # Get the window of returns ending at day i
-        window = returns[i - rolling_window + 1:i + 1]
+        # Get the window of returns
+        window = returns[max(0, i - rolling_window + 1):i + 1]
         
         # Calculate VaR
         var = np.percentile(window, (1 - confidence_level) * 100)
-        rolling_vars.append(var)
         
-        # Calculate ES (Expected Shortfall)
+        # Calculate ES
         losses = window[window <= var]
         es = np.mean(losses) if len(losses) > 0 else var
+        
+        rolling_vars.append(var)
         rolling_es.append(es)
     
     return np.array(rolling_vars), np.array(rolling_es)
@@ -343,9 +221,8 @@ def custom_finance_loss(pred_mean, pred_vol, targets, alpha=0.2, beta=0.3, gamma
 
     return total_loss
 
-
 def train_lstm_model(X_train, y_train, X_val, y_val, hidden_dim=100, num_layers=2, 
-                    batch_size=32, patience=15, max_epochs=1000):
+                    batch_size=32, patience=10, max_epochs=200):
     """
     Enhanced LSTM training with improved volatility prediction and safeguards
     """
@@ -444,25 +321,169 @@ def train_lstm_model(X_train, y_train, X_val, y_val, hidden_dim=100, num_layers=
     model.load_state_dict(best_model_state)
     return model
 
-def generate_scenarios(model, X_test, num_scenarios=1000):
+def calculate_lstm_var(returns, sequence_length=252, confidence_level=0.95, num_scenarios=5000):
     """
-    Generate multiple return scenarios from the LSTM predictions using Monte Carlo simulation.
+    Calculate LSTM-based VaR with proper prediction generation
     """
-    device = next(model.parameters()).device
-    X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
+    # Scale the returns
+    scaler = StandardScaler()
+    scaled_returns = scaler.fit_transform(returns.reshape(-1, 1)).flatten()
+    
+    # Split into train and test ensuring full-year sequences
+    train_size = len(scaled_returns) - sequence_length * 2
+    train_data = scaled_returns[:train_size]
+    test_data = scaled_returns[train_size:]
+    
+    print(f"Training data length: {len(train_data)}")
+    print(f"Test data length: {len(test_data)}")
+    
+    # Create sequences
+    X_train, y_train = create_sequences(train_data, sequence_length)
+    X_test, y_test = create_sequences(test_data, sequence_length)
+    
+    print(f"Training sequences shape: {X_train.shape}")
+    print(f"Test sequences shape: {X_test.shape}")
+    
+    # Train LSTM
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = train_lstm_model(
+        X_train, y_train,
+        X_test, y_test,
+        hidden_dim=100,
+        num_layers=2,
+        batch_size=32,
+        patience=10,
+        max_epochs=200
+    )
+    
+    # Generate predictions
+    vars = []
+    es_values = []
     
     with torch.no_grad():
-        mean, std = model(X_test_tensor)
-        mean = mean.cpu().numpy()
-        std = std.cpu().numpy()
+        for i in range(len(X_test)):
+            x = torch.tensor(X_test[i:i+1], dtype=torch.float32).to(device)
+            mean, std = model(x)
+            mean = mean.cpu().numpy()
+            std = std.cpu().numpy()
+            
+            # Generate scenarios for this timestep
+            scenarios = np.random.normal(mean[0, 0], std[0, 0], num_scenarios)
+            
+            # Calculate VaR and ES for this timestep
+            var = np.percentile(scenarios, (1-confidence_level)*100)
+            losses = scenarios[scenarios <= var]
+            es = np.mean(losses) if len(losses) > 0 else var
+            
+            vars.append(var)
+            es_values.append(es)
     
-    # Generate scenarios for each prediction point
-    all_scenarios = []
-    for i in range(len(mean)):
-        scenarios = np.random.normal(mean[i], std[i], num_scenarios)
-        all_scenarios.append(scenarios)
+    # Convert to arrays
+    vars = np.array(vars)
+    es_values = np.array(es_values)
     
-    return np.array(all_scenarios)
+    # Unscale predictions
+    vars = scaler.inverse_transform(vars.reshape(-1, 1)).flatten()
+    es_values = scaler.inverse_transform(es_values.reshape(-1, 1)).flatten()
+    
+    return vars, es_values
+
+def calculate_historical_var(returns, rolling_window=252, confidence_level=0.95):
+    """
+    Calculate Historical VaR using a rolling 1-year window
+    """
+    if len(returns) < rolling_window:
+        raise ValueError(f"Need at least {rolling_window} points for Historical VaR")
+    
+    rolling_vars = []
+    rolling_es = []
+    
+    for i in range(len(returns)):
+        if i < rolling_window - 1:
+            rolling_vars.append(np.nan)
+            rolling_es.append(np.nan)
+            continue
+        
+        # Get 1-year window
+        window = returns[max(0, i - rolling_window + 1):i + 1]
+        
+        # Calculate VaR
+        var = np.percentile(window, (1 - confidence_level) * 100)
+        
+        # Calculate ES
+        losses = window[window <= var]
+        es = np.mean(losses) if len(losses) > 0 else var
+        
+        rolling_vars.append(var)
+        rolling_es.append(es)
+    
+    # Convert to arrays and remove NaN values
+    rolling_vars = np.array(rolling_vars)
+    rolling_es = np.array(rolling_es)
+    valid_idx = ~np.isnan(rolling_vars)
+    
+    return rolling_vars[valid_idx], rolling_es[valid_idx]
+
+def calculate_monte_carlo_var(returns, rolling_window=252, n_simulations=5000, confidence_level=0.95):
+    """
+    Calculate Monte Carlo VaR using a rolling 1-year window
+    """
+    if len(returns) < rolling_window:
+        raise ValueError(f"Need at least {rolling_window} points for Monte Carlo VaR")
+    
+    rolling_vars = []
+    rolling_es = []
+    
+    for i in range(len(returns)):
+        if i < rolling_window - 1:
+            rolling_vars.append(np.nan)
+            rolling_es.append(np.nan)
+            continue
+        
+        # Get 1-year window for parameter estimation
+        window = returns[max(0, i - rolling_window + 1):i + 1]
+        
+        # Calculate parameters
+        mu = np.mean(window)
+        sigma = np.std(window)
+        if sigma == 0:
+            sigma = np.finfo(float).eps
+        
+        # Generate scenarios
+        scenarios = np.random.normal(mu, sigma, n_simulations)
+        
+        # Calculate VaR and ES
+        var = np.percentile(scenarios, (1 - confidence_level) * 100)
+        losses = scenarios[scenarios <= var]
+        es = np.mean(losses) if len(losses) > 0 else var
+        
+        rolling_vars.append(var)
+        rolling_es.append(es)
+    
+    # Convert to arrays and remove NaN values
+    rolling_vars = np.array(rolling_vars)
+    rolling_es = np.array(rolling_es)
+    valid_idx = ~np.isnan(rolling_vars)
+    
+    return rolling_vars[valid_idx], rolling_es[valid_idx]
+
+def generate_scenarios(model, X_test, num_scenarios=5000):
+    """
+    Generate scenarios with proper tensor handling
+    """
+    device = next(model.parameters()).device
+    scenarios = []
+    
+    with torch.no_grad():
+        for x in X_test:
+            x = torch.tensor(x, dtype=torch.float32).unsqueeze(0).to(device)
+            mean, std = model(x)
+            mean = mean.cpu().numpy()
+            std = std.cpu().numpy()
+            scenario = np.random.normal(mean, std, (1, num_scenarios))
+            scenarios.append(scenario[0])
+    
+    return np.array(scenarios)
 
 def calculate_full_valuation_var_es(scenarios, confidence_level=0.95):
     """
@@ -490,25 +511,47 @@ def calculate_full_valuation_var_es(scenarios, confidence_level=0.95):
     
     return np.array(vars), np.array(es_values)
 
-def analyze_portfolio_var(returns_df, weights, sequence_length=21, backtest_days=378,
-                        confidence_level=0.95, rolling_window=252, num_scenarios=1000):
+def analyze_portfolio_var(returns_df, weights, sequence_length=252, backtest_days=378,
+                        confidence_level=0.95, rolling_window=252, num_scenarios=5000):
     """
-    Modified portfolio analysis function using full valuation VaR for LSTM predictions.
+    Combined analysis using separated VaR calculations with proper array alignment
     """
     # Calculate portfolio returns
     portfolio_returns = calculate_portfolio_returns(returns_df, weights)
     
-    # Scale returns for LSTM training
+    # Ensure enough data for all calculations
+    min_required = max(sequence_length * 2, rolling_window) + backtest_days
+    if len(portfolio_returns) < min_required:
+        raise ValueError(f"Need at least {min_required} data points, got {len(portfolio_returns)}")
+    
+    # Get required data window
+    analysis_returns = portfolio_returns[-min_required:]
+    
+    # Calculate Historical VaR for the backtest period
+    print("Calculating Historical VaR...")
+    backtest_returns = analysis_returns[-backtest_days:]
+    hist_vars, hist_es = calculate_historical_var(
+        backtest_returns,
+        rolling_window=rolling_window,
+        confidence_level=confidence_level
+    )
+    
+    print("Calculating Monte Carlo VaR...")
+    mc_vars, mc_es = calculate_monte_carlo_var(
+        backtest_returns,
+        rolling_window=rolling_window,
+        n_simulations=num_scenarios,
+        confidence_level=confidence_level
+    )
+    
+    print("Calculating LSTM VaR...")
+    # Scale the returns for LSTM
     scaler = StandardScaler()
-    scaled_returns = scaler.fit_transform(portfolio_returns.reshape(-1, 1)).flatten()
+    scaled_returns = scaler.fit_transform(analysis_returns.reshape(-1, 1)).flatten()
     
-    # Split data for backtest
-    train_data = scaled_returns[:-backtest_days]
-    test_data = scaled_returns[-backtest_days:]
-    
-    # Create sequences
-    X_train, y_train = create_sequences(train_data, sequence_length)
-    X_test, y_test = create_sequences(test_data, sequence_length)
+    # Create sequences for LSTM
+    X_train, y_train = create_sequences(scaled_returns[:-backtest_days], sequence_length)
+    X_test, y_test = create_sequences(scaled_returns[-backtest_days-sequence_length:], sequence_length)
     
     # Train LSTM model
     model = train_lstm_model(
@@ -517,134 +560,185 @@ def analyze_portfolio_var(returns_df, weights, sequence_length=21, backtest_days
         hidden_dim=100,
         num_layers=2,
         batch_size=32,
-        patience=15,
+        patience=10,
         max_epochs=200
     )
     
-    # Generate scenarios for LSTM predictions
-    scenarios = generate_scenarios(model, X_test, num_scenarios)
+    # Generate predictions and scenarios
+    lstm_predictions = []
+    lstm_vars = []
+    lstm_es = []
     
-    # Calculate LSTM VaR and ES using full valuation method
-    lstm_vars, lstm_es = calculate_full_valuation_var_es(
-        scenarios, confidence_level
-    )
+    device = next(model.parameters()).device
     
-    # Unscale the VaR and ES values
+    with torch.no_grad():
+        for x in X_test:
+            x = torch.tensor(x.reshape(1, sequence_length, 1), dtype=torch.float32).to(device)
+            mean, std = model(x)
+            mean = mean.cpu().numpy()
+            std = std.cpu().numpy()
+            
+            # Store the mean prediction
+            pred = mean[0, 0]
+            lstm_predictions.append(pred)
+            
+            # Generate scenarios for VaR calculation
+            scenarios = np.random.normal(mean[0, 0], std[0, 0], num_scenarios)
+            
+            # Calculate VaR and ES
+            var = np.percentile(scenarios, (1-confidence_level)*100)
+            losses = scenarios[scenarios <= var]
+            es = np.mean(losses) if len(losses) > 0 else var
+            
+            lstm_vars.append(var)
+            lstm_es.append(es)
+    
+    # Convert predictions and risk measures to arrays
+    lstm_predictions = np.array(lstm_predictions)
+    lstm_vars = np.array(lstm_vars)
+    lstm_es = np.array(lstm_es)
+    
+    # Unscale predictions and risk measures
+    lstm_predictions = scaler.inverse_transform(lstm_predictions.reshape(-1, 1)).flatten()
     lstm_vars = scaler.inverse_transform(lstm_vars.reshape(-1, 1)).flatten()
     lstm_es = scaler.inverse_transform(lstm_es.reshape(-1, 1)).flatten()
     
-    # Get predicted returns (mean of scenarios)
-    predicted_returns = np.mean(scenarios, axis=1)
-    predicted_returns = scaler.inverse_transform(predicted_returns.reshape(-1, 1)).flatten()
+    # Get test returns aligned with predictions
+    test_returns = backtest_returns[:len(lstm_predictions)]
     
-    # Calculate historical VaR and ES
-    test_returns = portfolio_returns[-backtest_days:]
-    hist_vars = []
-    hist_es = []
+    # Align all arrays to the same length
+    min_len = min(len(test_returns), len(lstm_predictions), len(hist_vars), 
+                 len(hist_es), len(lstm_vars), len(lstm_es), 
+                 len(mc_vars), len(mc_es))
     
-    # Make sure we have enough data for the first window
-    if len(test_returns) < rolling_window:
-        rolling_window = len(test_returns)
+    test_returns = test_returns[:min_len]
+    lstm_predictions = lstm_predictions[:min_len]
+    hist_vars = hist_vars[:min_len]
+    hist_es = hist_es[:min_len]
+    lstm_vars = lstm_vars[:min_len]
+    lstm_es = lstm_es[:min_len]
+    mc_vars = mc_vars[:min_len]
+    mc_es = mc_es[:min_len]
     
-    # Calculate rolling VaR and ES
-    for i in range(sequence_length - 1, len(test_returns)):
-        # Ensure we have enough history for the window
-        start_idx = max(0, i - rolling_window + 1)
-        window = test_returns[start_idx:i + 1]
-        
-        if len(window) > 0:  # Check if window has data
-            var = np.percentile(window, (1 - confidence_level) * 100)
-            losses = window[window <= var]
-            es = np.mean(losses) if len(losses) > 0 else var
-        else:
-            # Use the previous values if window is empty
-            var = hist_vars[-1] if hist_vars else 0
-            es = hist_es[-1] if hist_es else 0
-            
-        hist_vars.append(var)
-        hist_es.append(es)
-    
-    hist_vars = np.array(hist_vars)
-    hist_es = np.array(hist_es)
-    
-    # Align the length of all arrays
-    min_len = min(len(predicted_returns), len(hist_vars), len(hist_es), len(lstm_vars), len(lstm_es))
-    predicted_returns = predicted_returns[-min_len:]
-    hist_vars = hist_vars[-min_len:]
-    hist_es = hist_es[-min_len:]
-    lstm_vars = lstm_vars[-min_len:]
-    lstm_es = lstm_es[-min_len:]
-    
-    # Calculate breaches using aligned data
-    test_returns = test_returns[-(min_len + sequence_length - 1):][-min_len:]  # Align with other arrays
+    # Calculate breaches using aligned arrays
     hist_es_breaches = test_returns < hist_es
     lstm_es_breaches = test_returns < lstm_es
+    mc_es_breaches = test_returns < mc_es
     
-    return predicted_returns, hist_vars, hist_es, lstm_vars, lstm_es, hist_es_breaches, lstm_es_breaches
+    print(f"\nArray lengths after alignment:")
+    print(f"Test returns: {len(test_returns)}")
+    print(f"LSTM predictions: {len(lstm_predictions)}")
+    print(f"Historical VaR: {len(hist_vars)}")
+    print(f"LSTM VaR: {len(lstm_vars)}")
+    print(f"Monte Carlo VaR: {len(mc_vars)}")
+    
+    return (lstm_predictions, hist_vars, hist_es, lstm_vars, lstm_es, mc_vars, mc_es,
+            hist_es_breaches, lstm_es_breaches, mc_es_breaches)
 
 def plot_risk_measures_comparison(portfolio_id, dates, returns, hist_vars, hist_es, 
-                                  lstm_vars, lstm_es, hist_es_breaches, lstm_es_breaches,
-                                  hist_var_breaches, lstm_var_breaches, plots_dir):
+                                lstm_vars, lstm_es, mc_vars, mc_es,
+                                hist_es_breaches, lstm_es_breaches, mc_es_breaches,
+                                plots_dir):
     """
-    Plot actual returns along with VaR and ES measures, including breach statistics and rates.
+    Fixed plotting function with explicit line styles and zorder to ensure all VaR measures are visible
     """
+    # Calculate VaR breaches
+    hist_var_breaches = returns < hist_vars
+    lstm_var_breaches = returns < lstm_vars
+    mc_var_breaches = returns < mc_vars
+    
+    # Calculate breach rates
     hist_var_breach_rate = np.mean(hist_var_breaches) * 100
     lstm_var_breach_rate = np.mean(lstm_var_breaches) * 100
+    mc_var_breach_rate = np.mean(mc_var_breaches) * 100
     hist_es_breach_rate = np.mean(hist_es_breaches) * 100
     lstm_es_breach_rate = np.mean(lstm_es_breaches) * 100
+    mc_es_breach_rate = np.mean(mc_es_breaches) * 100
 
-    fig, axs = plt.subplots(2, 1, figsize=(16, 12), constrained_layout=True)
+    fig, axs = plt.subplots(2, 1, figsize=(16, 16), constrained_layout=True)
 
     # Top Plot: Returns and VaR
     ax_var = axs[0]
-    ax_var.plot(dates, returns, label="Actual Returns", color="blue", alpha=0.7)
-    ax_var.plot(dates, hist_vars, label="Historical VaR", color="red", linestyle="--")
-    ax_var.plot(dates, lstm_vars, label="LSTM VaR", color="green", linestyle="--")
-    ax_var.scatter(dates[hist_var_breaches], returns[hist_var_breaches], color="red", marker="x", label="Hist VaR Breach")
-    ax_var.scatter(dates[lstm_var_breaches], returns[lstm_var_breaches], color="green", marker="x", label="LSTM VaR Breach")
-    ax_var.axhline(0, color="gray", linestyle=":")
+    # Plot returns first (background)
+    ax_var.plot(dates, returns, label="Actual Returns", color="blue", alpha=0.7, zorder=1)
+    
+    # Plot VaR lines with different line styles and higher zorder
+    ax_var.plot(dates, hist_vars, label="Historical VaR", color="red", 
+                linestyle='--', linewidth=1.5, zorder=2)
+    ax_var.plot(dates, lstm_vars, label="LSTM VaR", color="green", 
+                linestyle='--', linewidth=1.5, zorder=2)
+    ax_var.plot(dates, mc_vars, label="Monte Carlo VaR", color="purple", 
+                linestyle=':', linewidth=2, zorder=2)
+    
+    # Plot breaches with highest zorder
+    ax_var.scatter(dates[hist_var_breaches], returns[hist_var_breaches], 
+                  color="red", marker="x", label="Historical VaR Breach", zorder=5)
+    ax_var.scatter(dates[lstm_var_breaches], returns[lstm_var_breaches], 
+                  color="green", marker="x", label="LSTM VaR Breach", zorder=5)
+    ax_var.scatter(dates[mc_var_breaches], returns[mc_var_breaches], 
+                  color="purple", marker="x", label="MC VaR Breach", zorder=5)
 
     breach_text = (
-        f"Hist VaR Breach Rate: {hist_var_breach_rate:.2f}%\n"
-        f"LSTM VaR Breach Rate: {lstm_var_breach_rate:.2f}%"
+        f"Historical VaR Breach Rate: {hist_var_breach_rate:.2f}%\n"
+        f"LSTM VaR Breach Rate: {lstm_var_breach_rate:.2f}%\n"
+        f"Monte Carlo VaR Breach Rate: {mc_var_breach_rate:.2f}%"
     )
     ax_var.text(0.02, 0.98, breach_text, transform=ax_var.transAxes,
                 verticalalignment="top", bbox=dict(boxstyle="round", facecolor="white", alpha=0.8))
 
-    ax_var.set_title(f"{portfolio_id}: Returns and VaR Measures (with Breaches)")
+    ax_var.set_title(f"{portfolio_id}: Returns and VaR Measures")
     ax_var.set_xlabel("Date")
     ax_var.set_ylabel("Returns")
-    ax_var.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=3, fontsize=10)
-    ax_var.grid(True)
+    ax_var.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=3)
+    ax_var.grid(True, alpha=0.3)
 
     # Bottom Plot: Returns and ES
     ax_es = axs[1]
-    ax_es.plot(dates, returns, label="Actual Returns", color="blue", alpha=0.7)
-    ax_es.plot(dates, hist_es, label="Historical ES", color="red", linestyle="--")
-    ax_es.plot(dates, lstm_es, label="LSTM ES", color="green", linestyle="--")
-    ax_es.scatter(dates[hist_es_breaches], returns[hist_es_breaches], color="red", marker="x", label="Hist ES Breach")
-    ax_es.scatter(dates[lstm_es_breaches], returns[lstm_es_breaches], color="green", marker="x", label="LSTM ES Breach")
-    ax_es.axhline(0, color="gray", linestyle=":")
+    # Plot returns first (background)
+    ax_es.plot(dates, returns, label="Actual Returns", color="blue", alpha=0.7, zorder=1)
+    
+    # Plot ES lines with different line styles and higher zorder
+    ax_es.plot(dates, hist_es, label="Historical ES", color="red", 
+               linestyle='--', linewidth=1.5, zorder=2)
+    ax_es.plot(dates, lstm_es, label="LSTM ES", color="green", 
+               linestyle='--', linewidth=1.5, zorder=2)
+    ax_es.plot(dates, mc_es, label="Monte Carlo ES", color="purple", 
+               linestyle=':', linewidth=2, zorder=2)
+    
+    # Plot ES breaches with highest zorder
+    ax_es.scatter(dates[hist_es_breaches], returns[hist_es_breaches], 
+                 color="red", marker="x", label="Historical ES Breach", zorder=5)
+    ax_es.scatter(dates[lstm_es_breaches], returns[lstm_es_breaches], 
+                 color="green", marker="x", label="LSTM ES Breach", zorder=5)
+    ax_es.scatter(dates[mc_es_breaches], returns[mc_es_breaches], 
+                 color="purple", marker="x", label="MC ES Breach", zorder=5)
 
     breach_text = (
-        f"Hist ES Breach Rate: {hist_es_breach_rate:.2f}%\n"
-        f"LSTM ES Breach Rate: {lstm_es_breach_rate:.2f}%"
+        f"Historical ES Breach Rate: {hist_es_breach_rate:.2f}%\n"
+        f"LSTM ES Breach Rate: {lstm_es_breach_rate:.2f}%\n"
+        f"Monte Carlo ES Breach Rate: {mc_es_breach_rate:.2f}%"
     )
     ax_es.text(0.02, 0.98, breach_text, transform=ax_es.transAxes,
                verticalalignment="top", bbox=dict(boxstyle="round", facecolor="white", alpha=0.8))
 
-    ax_es.set_title(f"{portfolio_id}: Expected Shortfall Measures (with Breaches)")
+    ax_es.set_title(f"{portfolio_id}: Expected Shortfall Measures")
     ax_es.set_xlabel("Date")
-    ax_es.set_ylabel("Expected Shortfall / Returns")
-    ax_es.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=3, fontsize=10)
-    ax_es.grid(True)
+    ax_es.set_ylabel("Returns")
+    ax_es.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=3)
+    ax_es.grid(True, alpha=0.3)
 
-    # Save plot
-    save_path = os.path.join(plots_dir, f"{portfolio_id}_risk_comparison_with_breaches.png")
+    # Ensure all data is plotted with proper limits
+    for ax in axs:
+        ax.set_xlim(dates[0], dates[-1])
+        min_val = min(returns.min(), hist_vars.min(), lstm_vars.min(), mc_vars.min()) * 1.1
+        max_val = max(returns.max(), hist_vars.max(), lstm_vars.max(), mc_vars.max()) * 1.1
+        ax.set_ylim(min_val, max_val)
+
+    save_path = os.path.join(plots_dir, f"{portfolio_id}_risk_comparison.png")
     plt.savefig(save_path, dpi=300, bbox_inches="tight")
     plt.close()
 
-    return save_path  
+    return save_path
 
 def plot_portfolio_risk_metrics(portfolio_id, dates, returns, rolling_vars, 
                               rolling_es, plots_dir):
@@ -696,15 +790,19 @@ def plot_portfolio_risk_metrics(portfolio_id, dates, returns, rolling_vars,
 
 def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, plots_dir):
     """
-    Modified distribution plots with better legend placement
+    Modified distribution plots to correctly show differences between predicted and actual returns
     """
     fig = plt.figure(figsize=(20, 10))
     gs = fig.add_gridspec(2, 3)
     
-    # 1. Histogram of predicted returns with normal fit
-    ax1 = fig.add_subplot(gs[0, 0])
+    # Calculate statistics for predicted returns
     mu_pred = np.mean(predicted_returns)
     sigma_pred = np.std(predicted_returns)
+    skew_pred = stats.skew(predicted_returns)
+    kurt_pred = stats.kurtosis(predicted_returns)
+    
+    # 1. Histogram of predicted returns with normal fit
+    ax1 = fig.add_subplot(gs[0, 0])
     n_pred, bins_pred, _ = ax1.hist(predicted_returns, bins=50, density=True, 
                                    alpha=0.7, color='blue', label='Predicted Returns')
     xmin, xmax = ax1.get_xlim()
@@ -714,16 +812,14 @@ def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, p
     ax1.set_title(f'{portfolio_id}: Distribution of Predicted Returns')
     ax1.set_xlabel('Returns')
     ax1.set_ylabel('Density')
-    ax1.legend(loc='upper left', bbox_to_anchor=(0.01, 0.99),
-            ncol=2,  # Arrange items in two columns to save vertical space
-            fancybox=True, shadow=True,
-            bbox_transform=ax1.transAxes)
+    ax1.legend(loc='upper left')
     ax1.grid(True)
     
-    # Stats box in upper left
-    stats_text = f'Mean: {mu_pred:.6f}\nStd: {sigma_pred:.6f}\n'
-    stats_text += f'Skewness: {stats.skew(predicted_returns):.3f}\n'
-    stats_text += f'Kurtosis: {stats.kurtosis(predicted_returns):.3f}'
+    # Stats box for predicted returns
+    stats_text = (f'Mean: {mu_pred:.6f}\n'
+                 f'Std: {sigma_pred:.6f}\n'
+                 f'Skewness: {skew_pred:.3f}\n'
+                 f'Kurtosis: {kurt_pred:.3f}')
     ax1.text(0.02, 0.98, stats_text, transform=ax1.transAxes, 
              verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
     
@@ -732,10 +828,14 @@ def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, p
     stats.probplot(predicted_returns, dist="norm", plot=ax2)
     ax2.set_title(f'{portfolio_id}: Q-Q Plot of Predicted Returns')
     
-    # 3. Histogram of actual returns with normal fit
-    ax3 = fig.add_subplot(gs[1, 0])
+    # Calculate statistics for actual returns
     mu_act = np.mean(actual_returns)
     sigma_act = np.std(actual_returns)
+    skew_act = stats.skew(actual_returns)
+    kurt_act = stats.kurtosis(actual_returns)
+    
+    # 3. Histogram of actual returns with normal fit
+    ax3 = fig.add_subplot(gs[1, 0])
     n_act, bins_act, _ = ax3.hist(actual_returns, bins=50, density=True, 
                                  alpha=0.7, color='green', label='Actual Returns')
     xmin, xmax = ax3.get_xlim()
@@ -745,13 +845,14 @@ def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, p
     ax3.set_title(f'{portfolio_id}: Distribution of Actual Returns')
     ax3.set_xlabel('Returns')
     ax3.set_ylabel('Density')
-    ax3.legend(loc='upper right')  # Move legend to upper right
+    ax3.legend(loc='upper left')
     ax3.grid(True)
     
-    # Stats box in upper left
-    stats_text = f'Mean: {mu_act:.6f}\nStd: {sigma_act:.6f}\n'
-    stats_text += f'Skewness: {stats.skew(actual_returns):.3f}\n'
-    stats_text += f'Kurtosis: {stats.kurtosis(actual_returns):.3f}'
+    # Stats box for actual returns
+    stats_text = (f'Mean: {mu_act:.6f}\n'
+                 f'Std: {sigma_act:.6f}\n'
+                 f'Skewness: {skew_act:.3f}\n'
+                 f'Kurtosis: {kurt_act:.3f}')
     ax3.text(0.02, 0.98, stats_text, transform=ax3.transAxes, 
              verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
     
@@ -764,8 +865,9 @@ def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, p
     ax5 = fig.add_subplot(gs[:, 2])
     
     # Create common bins for both distributions
-    min_val = min(min(predicted_returns), min(actual_returns))
-    max_val = max(max(predicted_returns), max(actual_returns))
+    all_returns = np.concatenate([predicted_returns, actual_returns])
+    min_val = np.min(all_returns)
+    max_val = np.max(all_returns)
     bins = np.linspace(min_val, max_val, 50)
     
     # Plot both histograms with transparency
@@ -784,16 +886,22 @@ def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, p
     ax5.set_title(f'{portfolio_id}: Return Distributions Comparison')
     ax5.set_xlabel('Returns')
     ax5.set_ylabel('Density')
-    ax5.legend(loc='upper right')  # Move legend to upper right
+    ax5.legend(loc='upper right')
     ax5.grid(True)
     
-    # Move test statistics to upper left
+    # Add statistical comparison
     _, p_value_pred = stats.normaltest(predicted_returns)
     _, p_value_act = stats.normaltest(actual_returns)
+    # Calculate KS test between distributions
+    ks_stat, ks_pvalue = stats.ks_2samp(predicted_returns, actual_returns)
+    
     test_text = (f'Normality Test p-values:\n'
                 f'Predicted: {p_value_pred:.6f}\n'
                 f'Actual: {p_value_act:.6f}\n\n'
-                f'Std Dev Comparison:\n'
+                f'Distribution Comparison:\n'
+                f'KS-test statistic: {ks_stat:.6f}\n'
+                f'KS-test p-value: {ks_pvalue:.6f}\n\n'
+                f'Standard Deviations:\n'
                 f'Predicted: {sigma_pred:.6f}\n'
                 f'Actual: {sigma_act:.6f}')
     ax5.text(0.02, 0.98, test_text, transform=ax5.transAxes, 
@@ -808,7 +916,7 @@ def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, p
 
 def analyze_covid_stress_period(returns_df, weights, market_event_start='2020-02-18', 
                               market_event_end='2020-03-20', rolling_window=252,
-                              confidence_level=0.95, sequence_length=21, num_scenarios=1000):
+                              confidence_level=0.95, sequence_length=252, num_scenarios=5000):
     """
     Analyze portfolio behavior during COVID-19 stress period with full valuation VaR
     """
@@ -887,6 +995,14 @@ def analyze_covid_stress_period(returns_df, weights, market_event_start='2020-02
         losses = recent_window[recent_window <= hist_var]
         hist_es = np.mean(losses) if len(losses) > 0 else hist_var
         
+        # Calculate Monte Carlo VaR
+        mu = np.mean(recent_window)
+        sigma = np.std(recent_window)
+        mc_scenarios = np.random.normal(mu, sigma, num_scenarios)
+        mc_var = np.percentile(mc_scenarios, (1 - confidence_level) * 100)
+        mc_losses = mc_scenarios[mc_scenarios <= mc_var]
+        mc_es = np.mean(mc_losses) if len(mc_losses) > 0 else mc_var
+        
         # Prepare LSTM prediction sequence
         pred_data = hist_data[-sequence_length:]
         scaled_pred = scaler.transform(pred_data.values.reshape(-1, 1)).flatten()
@@ -923,10 +1039,13 @@ def analyze_covid_stress_period(returns_df, weights, market_event_start='2020-02
             'Historical_ES': hist_es,
             'LSTM_VaR': lstm_var,
             'LSTM_ES': lstm_es,
+            'MC_VaR': mc_var,
+            'MC_ES': mc_es,
             'LSTM_Predicted_Returns': pred_mean,
             'LSTM_Predicted_Volatility': pred_vol,
             'Historical_VaR_Breach': current_return < hist_var,
             'LSTM_VaR_Breach': current_return < lstm_var,
+            'MC_VaR_Breach': current_return < mc_var,
             'Is_Stress_Period': (current_date >= event_start) and (current_date <= event_end)
         })
         
@@ -948,14 +1067,20 @@ def analyze_covid_stress_period(returns_df, weights, market_event_start='2020-02
         'Historical_VaR_Breach_Rate': results_df[stress_period_mask]['Historical_VaR_Breach'].mean() * 100,
         'LSTM_VaR_Breaches': results_df[stress_period_mask]['LSTM_VaR_Breach'].sum(),
         'LSTM_VaR_Breach_Rate': results_df[stress_period_mask]['LSTM_VaR_Breach'].mean() * 100,
+        'MC_VaR_Breaches': results_df[stress_period_mask]['MC_VaR_Breach'].sum(),
+        'MC_VaR_Breach_Rate': results_df[stress_period_mask]['MC_VaR_Breach'].mean() * 100,
         'Pre_Stress_Historical_VaR_Mean': results_df[~stress_period_mask]['Historical_VaR'].mean(),
         'Stress_Historical_VaR_Mean': results_df[stress_period_mask]['Historical_VaR'].mean(),
         'Pre_Stress_LSTM_VaR_Mean': results_df[~stress_period_mask]['LSTM_VaR'].mean(),
         'Stress_LSTM_VaR_Mean': results_df[stress_period_mask]['LSTM_VaR'].mean(),
+        'Pre_Stress_MC_VaR_Mean': results_df[~stress_period_mask]['MC_VaR'].mean(),
+        'Stress_MC_VaR_Mean': results_df[stress_period_mask]['MC_VaR'].mean(),
         'Historical_VaR_Change_Pct': ((results_df[stress_period_mask]['Historical_VaR'].mean() /
                                      results_df[~stress_period_mask]['Historical_VaR'].mean()) - 1) * 100,
         'LSTM_VaR_Change_Pct': ((results_df[stress_period_mask]['LSTM_VaR'].mean() /
                                 results_df[~stress_period_mask]['LSTM_VaR'].mean()) - 1) * 100,
+        'MC_VaR_Change_Pct': ((results_df[stress_period_mask]['MC_VaR'].mean() /
+                              results_df[~stress_period_mask]['MC_VaR'].mean()) - 1) * 100,
         'LSTM_Prediction_MSE': np.mean((results_df['Returns'] - results_df['LSTM_Predicted_Returns'])**2),
         'LSTM_Prediction_MAE': np.mean(np.abs(results_df['Returns'] - results_df['LSTM_Predicted_Returns'])),
         'LSTM_Prediction_RMSE': np.sqrt(np.mean((results_df['Returns'] - results_df['LSTM_Predicted_Returns'])**2)),
@@ -969,18 +1094,17 @@ def analyze_covid_stress_period(returns_df, weights, market_event_start='2020-02
 
 def plot_stress_period_analysis_covid(results_df, stress_stats, portfolio_name, plots_dir):
     """
-    Create detailed visualizations comparing Historical and LSTM VaR during stress period
-    with improved legend placement.
+    Enhanced stress period analysis plot including Monte Carlo VaR.
     """
-    # Create figure with subplots
     fig = plt.figure(figsize=(20, 12))
     gs = fig.add_gridspec(2, 2)
 
     # 1. Returns and Risk Measures Plot
     ax1 = fig.add_subplot(gs[0, :])
     ax1.plot(results_df['Date'], results_df['Returns'], label='Portfolio Returns', color='blue', alpha=0.7)
-    ax1.plot(results_df['Date'], results_df['Historical_VaR'], label='Historical VaR (95%)', color='red', linestyle='--')
-    ax1.plot(results_df['Date'], results_df['LSTM_VaR'], label='LSTM VaR (95%)', color='green', linestyle='--')
+    ax1.plot(results_df['Date'], results_df['Historical_VaR'], label='Historical VaR', color='red', linestyle='--')
+    ax1.plot(results_df['Date'], results_df['LSTM_VaR'], label='LSTM VaR', color='green', linestyle='--')
+    ax1.plot(results_df['Date'], results_df['MC_VaR'], label='Monte Carlo VaR', color='purple', linestyle='--')
     
     # Highlight stress period
     stress_mask = results_df['Is_Stress_Period']
@@ -988,20 +1112,19 @@ def plot_stress_period_analysis_covid(results_df, stress_stats, portfolio_name, 
     ax1.axvspan(stress_dates.iloc[0], stress_dates.iloc[-1],
                 color='gray', alpha=0.2, label='COVID-19 Stress Period')
 
-    # Plot breaches
-    hist_breach_dates = results_df[results_df['Historical_VaR_Breach']]['Date']
-    hist_breach_returns = results_df[results_df['Historical_VaR_Breach']]['Returns']
-    lstm_breach_dates = results_df[results_df['LSTM_VaR_Breach']]['Date']
-    lstm_breach_returns = results_df[results_df['LSTM_VaR_Breach']]['Returns']
-    ax1.scatter(hist_breach_dates, hist_breach_returns, color='red', marker='x',
-                label='Historical VaR Breaches', zorder=5)
-    ax1.scatter(lstm_breach_dates, lstm_breach_returns, color='green', marker='x',
-                label='LSTM VaR Breaches', zorder=5)
+    # Plot breaches for each method
+    for method, color in [('Historical_VaR_Breach', 'red'), 
+                         ('LSTM_VaR_Breach', 'green'),
+                         ('MC_VaR_Breach', 'purple')]:
+        breach_dates = results_df[results_df[method]]['Date']
+        breach_returns = results_df[results_df[method]]['Returns']
+        ax1.scatter(breach_dates, breach_returns, color=color, marker='x',
+                   label=f'{method.split("_")[0]} Breaches', zorder=5)
 
     ax1.set_title(f'{portfolio_name}: Returns and VaR Measures During COVID-19 Stress Period')
     ax1.set_xlabel('Date')
     ax1.set_ylabel('Return/Risk Level')
-    ax1.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3, fontsize=10)
+    ax1.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=4, fontsize=10)
     ax1.grid(True)
 
     # Add stress period statistics
@@ -1011,8 +1134,7 @@ def plot_stress_period_analysis_covid(results_df, stress_stats, portfolio_name, 
         f"Worst Loss: {stress_stats['Stress_Period_Worst_Loss']:.4%}\n"
         f"Historical VaR Breach Rate: {stress_stats['Historical_VaR_Breach_Rate']:.1f}%\n"
         f"LSTM VaR Breach Rate: {stress_stats['LSTM_VaR_Breach_Rate']:.1f}%\n"
-        f"Historical VaR Change: {stress_stats['Historical_VaR_Change_Pct']:.1f}%\n"
-        f"LSTM VaR Change: {stress_stats['LSTM_VaR_Change_Pct']:.1f}%"
+        f"MC VaR Breach Rate: {stress_stats['MC_VaR_Breach_Rate']:.1f}%"
     )
     ax1.text(0.02, 0.98, stats_text, transform=ax1.transAxes,
              verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
@@ -1021,9 +1143,10 @@ def plot_stress_period_analysis_covid(results_df, stress_stats, portfolio_name, 
     ax2 = fig.add_subplot(gs[1, 0])
     ax2.plot(results_df['Date'], results_df['Historical_VaR'], label='Historical VaR', color='red')
     ax2.plot(results_df['Date'], results_df['LSTM_VaR'], label='LSTM VaR', color='green')
+    ax2.plot(results_df['Date'], results_df['MC_VaR'], label='Monte Carlo VaR', color='purple')
     ax2.axvspan(stress_dates.iloc[0], stress_dates.iloc[-1],
                 color='gray', alpha=0.2, label='COVID-19 Stress Period')
-    ax2.set_title('Historical vs LSTM VaR Comparison')
+    ax2.set_title('VaR Methods Comparison')
     ax2.set_xlabel('Date')
     ax2.set_ylabel('VaR')
     ax2.legend(loc="upper left", fontsize=10)
@@ -1031,23 +1154,26 @@ def plot_stress_period_analysis_covid(results_df, stress_stats, portfolio_name, 
 
     # 3. Breach Analysis
     ax3 = fig.add_subplot(gs[1, 1])
-    # Calculate cumulative breaches
-    hist_cum_breaches = np.cumsum(results_df['Historical_VaR_Breach'])
-    lstm_cum_breaches = np.cumsum(results_df['LSTM_VaR_Breach'])
-    ax3.plot(results_df['Date'], hist_cum_breaches, label='Cumulative Historical VaR Breaches', color='red')
-    ax3.plot(results_df['Date'], lstm_cum_breaches, label='Cumulative LSTM VaR Breaches', color='green')
+    # Calculate cumulative breaches for each method
+    for method, color, label in [('Historical_VaR_Breach', 'red', 'Historical'), 
+                                ('LSTM_VaR_Breach', 'green', 'LSTM'),
+                                ('MC_VaR_Breach', 'purple', 'Monte Carlo')]:
+        cum_breaches = np.cumsum(results_df[method])
+        ax3.plot(results_df['Date'], cum_breaches, 
+                label=f'Cumulative {label} Breaches', color=color)
+
     ax3.axvspan(stress_dates.iloc[0], stress_dates.iloc[-1],
                 color='gray', alpha=0.2, label='COVID-19 Stress Period')
     ax3.set_title('Cumulative VaR Breaches')
     ax3.set_xlabel('Date')
     ax3.set_ylabel('Number of Breaches')
-    ax3.legend(loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2, fontsize=10)
+    ax3.legend(loc="upper center", bbox_to_anchor=(0.5, -0.15), ncol=3, fontsize=10)
     ax3.grid(True)
 
     plt.tight_layout()
     
     # Save plot
-    save_path = os.path.join(plots_dir, f"{portfolio_name}_covid_stress_analysis.png")
+    save_path = os.path.join(plots_dir, f"{portfolio_name}_covid_stress_analysis_with_mc.png")
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
 
@@ -1065,29 +1191,35 @@ def main():
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         
-    # Set up directories
+    # Set up directories - Modified path handling
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(current_dir, "data", 'data')
+    data_dir = os.path.join(current_dir, "data", 'data')  # Removed nested "data" directory
     results_dir = os.path.join(current_dir, "results")
     plots_dir = os.path.join(results_dir, "plots")
     covid_analysis_dir = os.path.join(results_dir, "covid_analysis")
-    pca_analysis_dir = os.path.join(results_dir, "pca_analysis")
     
-    # Create directories
-    for directory in [data_dir, results_dir, plots_dir, covid_analysis_dir, pca_analysis_dir]:
-        os.makedirs(directory, exist_ok=True)
+    # Create directories if they don't exist
+    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(results_dir, exist_ok=True)
+    os.makedirs(plots_dir, exist_ok=True)
+    os.makedirs(covid_analysis_dir, exist_ok=True)
     
     # Set parameters
-    backtest_days = 378
-    rolling_window = 252
+    backtest_days = 378  # ~1.5 years
+    rolling_window = 252  # 1 year
+    sequence_length = 252  # 1 year for LSTM
     confidence_level = 0.95
+    num_scenarios = 5000
     
-    # Load data
+    # Load data - Updated file paths
     data_path = os.path.join(data_dir, "sp500_adjusted_close_cleaned.csv")
     market_caps_path = os.path.join(data_dir, "sp500_market_caps.csv")
     
-    if not all(os.path.exists(p) for p in [data_path, market_caps_path]):
-        raise FileNotFoundError("Required data files not found")
+    # Check if required files exist
+    if not os.path.exists(data_path):
+        raise FileNotFoundError(f"Required file not found: {data_path}")
+    if not os.path.exists(market_caps_path):
+        raise FileNotFoundError(f"Required file not found: {market_caps_path}")
     
     print("Loading data...")
     data = pd.read_csv(data_path)
@@ -1099,78 +1231,44 @@ def main():
     # Calculate returns
     log_prices = np.log(data.iloc[:, 1:])
     returns_df = log_prices.diff().dropna()
-    returns_df.index = pd.to_datetime(data['Date'].values[1:])
-    dates = returns_df.index.values
+    returns_df.index = pd.to_datetime(data['Date'].values[1:])  # Set proper datetime index
+    dates = returns_df.index.values  # Aligned dates
     
     print("Creating portfolios...")
-    results = create_dynamic_pca_portfolios(
-        returns_df, 
-        market_caps, 
-        n_components=5, 
-        window_size=252
-    )
-    
-    if len(results) == 4:
-        initial_portfolios, rolling_weights, variance_summary, turnover = results
-        explained_variance_df = pd.DataFrame(index=returns_df.index[252:])  # Create empty DataFrame
-        for i in range(5):  # Assuming 5 components
-            explained_variance_df[f'Component_{i+1}'] = variance_summary[f'Component_{i+1}'].mean()
-    else:
-        initial_portfolios, rolling_weights, variance_summary, turnover, explained_variance_df = results
-    
-    # Save initial PCA analysis
-    variance_summary.to_csv(os.path.join(pca_analysis_dir, "pca_variance_summary.csv"))
-    turnover.to_csv(os.path.join(pca_analysis_dir, "pca_turnover.csv"))
-    explained_variance_df.to_csv(os.path.join(pca_analysis_dir, "pca_explained_variance.csv"))
-    
-    print("Calculating portfolio returns...")
-    portfolio_returns_df = calculate_dynamic_portfolio_returns(
-        returns_df, 
-        initial_portfolios, 
-        rolling_weights
-    )
-    
-    if portfolio_returns_df.isnull().any().any():
-        print("Warning: Some portfolio returns contain NaN values")
-        portfolio_returns_df = portfolio_returns_df.fillna(method='ffill')
-    
-    print("Starting portfolio analysis...")
+    # Create portfolios: Equal-weight S&P 500, Market-cap-weight S&P 500, and PCA portfolios
+    portfolios = create_pca_portfolios(returns_df, market_caps, n_components=5)
     
     # Analyze each portfolio
-    for i in range(len(initial_portfolios)):
+    for i, weights in enumerate(portfolios):
         # Determine portfolio name
         if i == 0:
             portfolio_name = "S&P 500 (Equal-Weight)"
-            weights = initial_portfolios[i]  # Static weights
         elif i == 1:
             portfolio_name = "S&P 500 (Market-Cap-Weight)"
-            weights = initial_portfolios[i]  # Static weights
         else:
             portfolio_name = f"PCA Portfolio {i-1}"
-            # For PCA portfolios, use the rolling weights
-            if i >= 2:
-            # For PCA portfolios, reconstruct the weight vector from the stored weights
-                weights = np.array(rolling_weights.iloc[-1, i-2])
-                if isinstance(weights, (float, int)):  # If weights is stored as a string or single value
-                    weights = np.fromstring(weights.strip('[]'), sep=' ')  # Convert string to array
-                # Ensure weights sum to 1
-                weights = weights / np.sum(weights)
-            else:
-                weights = initial_portfolios[i]  # Static weights for non-PCA portfolios
-        
+            
         print(f"\nAnalyzing {portfolio_name}...")
         
-        # Get portfolio returns for this portfolio
-        portfolio_returns = portfolio_returns_df[f'Portfolio_{i}']
+        # Calculate portfolio returns
+        portfolio_returns = calculate_portfolio_returns(returns_df, weights)
         
-        # Calculate risk metrics using current weights
-        predicted_returns, hist_vars, hist_es, lstm_vars, lstm_es, hist_es_breaches, lstm_es_breaches = analyze_portfolio_var(
-            returns_df, 
-            weights, 
+        # Calculate Monte Carlo VaR for the backtest period
+        mc_vars, mc_es = calculate_monte_carlo_var(
+            portfolio_returns[-backtest_days:],
+            rolling_window=rolling_window,
+            n_simulations=5000,
+            confidence_level=confidence_level
+        )
+        
+        # Get LSTM and Historical VaR metrics
+        predicted_returns, hist_vars, hist_es, lstm_vars, lstm_es, mc_vars, mc_es, \
+        hist_es_breaches, lstm_es_breaches, mc_es_breaches = analyze_portfolio_var(
+            returns_df, weights, 
             backtest_days=backtest_days,
             confidence_level=confidence_level, 
             rolling_window=rolling_window,
-            num_scenarios=1000
+            num_scenarios=5000
         )
         
         # Prepare data for plotting
@@ -1179,7 +1277,8 @@ def main():
         
         # Align all series lengths
         min_len = min(len(plot_dates), len(plot_returns), len(hist_vars), 
-                     len(hist_es), len(predicted_returns))
+                    len(hist_es), len(predicted_returns), len(mc_vars))
+        
         plot_dates = plot_dates[-min_len:]
         plot_returns = plot_returns[-min_len:]
         hist_vars = hist_vars[-min_len:]
@@ -1187,98 +1286,32 @@ def main():
         predicted_returns = predicted_returns[-min_len:]
         lstm_vars = lstm_vars[-min_len:]
         lstm_es = lstm_es[-min_len:]
+        mc_vars = mc_vars[-min_len:]
+        mc_es = mc_es[-min_len:]
         
         # Calculate breach rates
         hist_var_breaches = plot_returns < hist_vars
         lstm_var_breaches = plot_returns < lstm_vars
-        mse_predicted_returns = np.mean((predicted_returns - plot_returns) ** 2)
+        mc_var_breaches = plot_returns < mc_vars
+        mc_es_breaches = plot_returns < mc_es
         
+        mse_predicted_returns = np.mean((predicted_returns - plot_returns) ** 2)
+
+        # Update portfolio statistics
         portfolio_stats = pd.Series({
             'Annual_Return': np.mean(portfolio_returns) * 252,
             'Annual_Volatility': np.std(portfolio_returns) * np.sqrt(252),
             'Sharpe_Ratio': np.mean(portfolio_returns) / np.std(portfolio_returns) * np.sqrt(252),
             'Historical_VaR_Breach_Rate': hist_var_breaches.mean() * 100,
             'LSTM_VaR_Breach_Rate': lstm_var_breaches.mean() * 100,
+            'MC_VaR_Breach_Rate': mc_var_breaches.mean() * 100,
             'Skewness': stats.skew(portfolio_returns),
             'Excess_Kurtosis': stats.kurtosis(portfolio_returns),
             'Max_Drawdown': np.min(portfolio_returns),
-            'VaR_95_Historical': np.percentile(portfolio_returns, 5)
+            'VaR_95_Historical': np.percentile(portfolio_returns, 5),
+            'VaR_95_MC': mc_vars.mean()
         })
-                
-        # If this is a PCA portfolio, save additional PCA-specific analysis
-        if i >= 2:
-            pca_portfolio_index = i - 2  # Adjust index for PCA portfolios
-            try:
-                # Save PCA weights evolution
-                pca_weights_df = pd.DataFrame(
-                    rolling_weights.iloc[:, pca_portfolio_index],
-                    index=rolling_weights.index,
-                    columns=returns_df.columns
-                )
-                pca_weights_df.to_csv(
-                    os.path.join(results_dir, f"{portfolio_name}_rolling_weights.csv")
-                )
-                
-                # Calculate and save weight stability metrics
-                weight_stability = pd.DataFrame({
-                    'Mean_Weight': pca_weights_df.mean(),
-                    'Std_Weight': pca_weights_df.std(),
-                    'Max_Weight': pca_weights_df.max(),
-                    'Min_Weight': pca_weights_df.min(),
-                    'Weight_Turnover': np.abs(pca_weights_df.diff()).mean()
-                })
-                weight_stability.to_csv(
-                    os.path.join(results_dir, f"{portfolio_name}_weight_stability.csv")
-                )
-                
-                # Save explained variance for this component
-                component_name = f'Component_{pca_portfolio_index+1}'
-                explained_var_df = pd.DataFrame({
-                    'Date': explained_variance_df.index,
-                    'Explained_Variance_Ratio': explained_variance_df[component_name]
-                })
-                explained_var_df.to_csv(
-                    os.path.join(results_dir, f"{portfolio_name}_explained_variance.csv")
-                )
-                
-                # Calculate additional PCA portfolio metrics
-                pca_metrics = pd.Series({
-                    'Annual_Turnover': turnover.iloc[0, pca_portfolio_index],
-                    'Mean_Explained_Variance': variance_summary.loc[component_name, 'Mean_Explained_Variance'],
-                    'Weight_Stability': 1 - weight_stability['Weight_Turnover'].mean(),
-                    'Max_Single_Stock_Exposure': weight_stability['Max_Weight'].max()
-                })
-                
-                # Add PCA-specific metrics to portfolio stats
-                portfolio_stats = pd.concat([portfolio_stats, pca_metrics])
-                
-            except Exception as e:
-                print(f"Warning: Error in PCA analysis for {portfolio_name}: {str(e)}")
-                # Create empty metrics if analysis fails
-                pca_metrics = pd.Series({
-                    'Annual_Turnover': np.nan,
-                    'Mean_Explained_Variance': np.nan,
-                    'Weight_Stability': np.nan,
-                    'Max_Single_Stock_Exposure': np.nan
-                })
-                portfolio_stats = pd.concat([portfolio_stats, pca_metrics])
         
-        # Calculate summary statistics
-        summary_stats = pd.Series({
-            'Historical_VaR_Breach_Rate': hist_var_breaches.mean() * 100,
-            'LSTM_VaR_Breach_Rate': lstm_var_breaches.mean() * 100,
-            'Avg_Historical_VaR': hist_vars.mean(),
-            'Avg_Historical_ES': hist_es.mean(),
-            'Avg_LSTM_VaR': lstm_vars.mean(),
-            'Avg_LSTM_ES': lstm_es.mean(),
-            'LSTM_Prediction_MAE': np.mean(np.abs(plot_returns - predicted_returns)),
-            'LSTM_Prediction_MSE': mse_predicted_returns,
-            'LSTM_Prediction_Std': np.std(predicted_returns),
-            'Actual_Returns_Std': np.std(plot_returns),
-            'LSTM_VaR_Coverage_Ratio': (lstm_var_breaches.mean() * 100) / 5.0,
-            'Historical_VaR_Coverage_Ratio': (hist_var_breaches.mean() * 100) / 5.0,
-            'LSTM_ES_vs_Historical_ES_Ratio': lstm_es.mean() / hist_es.mean()
-        })
         # Create weights DataFrame
         weights_df = pd.DataFrame({
             'Stock': returns_df.columns,
@@ -1288,8 +1321,28 @@ def main():
         })
         weights_df['Weight_Percentage'] = weights_df['Weight'] * 100
         weights_df = weights_df.sort_values('Weight_Percentage', ascending=False)
+                
+        # Update summary statistics
+        summary_stats = pd.Series({
+            'Historical_VaR_Breach_Rate': hist_var_breaches.mean() * 100,
+            'LSTM_VaR_Breach_Rate': lstm_var_breaches.mean() * 100,
+            'MC_VaR_Breach_Rate': mc_var_breaches.mean() * 100,
+            'Avg_Historical_VaR': hist_vars.mean(),
+            'Avg_Historical_ES': hist_es.mean(),
+            'Avg_LSTM_VaR': lstm_vars.mean(),
+            'Avg_LSTM_ES': lstm_es.mean(),
+            'Avg_MC_VaR': mc_vars.mean(),
+            'Avg_MC_ES': mc_es.mean(),
+            'LSTM_Prediction_MAE': np.mean(np.abs(plot_returns - predicted_returns)),
+            'LSTM_Prediction_MSE': mse_predicted_returns,
+            'LSTM_Prediction_Std': np.std(predicted_returns),
+            'Actual_Returns_Std': np.std(plot_returns),
+            'LSTM_VaR_Coverage_Ratio': (lstm_var_breaches.mean() * 100) / 5.0,
+            'Historical_VaR_Coverage_Ratio': (hist_var_breaches.mean() * 100) / 5.0,
+            'MC_VaR_Coverage_Ratio': (mc_var_breaches.mean() * 100) / 5.0
+        })
         
-        # Save metrics to DataFrame, including breaches
+        # Update risk metrics DataFrame
         risk_metrics_df = pd.DataFrame({
             'Date': plot_dates,
             'Portfolio': portfolio_name,
@@ -1299,25 +1352,49 @@ def main():
             'Historical_ES': hist_es,
             'LSTM_VaR': lstm_vars,
             'LSTM_ES': lstm_es,
+            'MC_VaR': mc_vars,
+            'MC_ES': mc_es,
             'Historical_VaR_Breach': hist_var_breaches.astype(int),
             'LSTM_VaR_Breach': lstm_var_breaches.astype(int),
+            'MC_VaR_Breach': mc_var_breaches.astype(int),
             'Historical_ES_Breach': hist_es_breaches.astype(int),
-            'LSTM_ES_Breach': lstm_es_breaches.astype(int)
+            'LSTM_ES_Breach': lstm_es_breaches.astype(int),
+            'MC_ES_Breach': mc_es_breaches.astype(int)
         })
         
-        # Add breach rates as summary rows at the bottom
+        # Update breach rates summary
         breach_rates = pd.DataFrame({
             'Date': ['Breach Rates'],
             'Portfolio': [portfolio_name],
             'Historical_VaR_Breach': [np.mean(hist_var_breaches) * 100],
             'LSTM_VaR_Breach': [np.mean(lstm_var_breaches) * 100],
+            'MC_VaR_Breach': [np.mean(mc_var_breaches) * 100],
             'Historical_ES_Breach': [np.mean(hist_es_breaches) * 100],
-            'LSTM_ES_Breach': [np.mean(lstm_es_breaches) * 100]
+            'LSTM_ES_Breach': [np.mean(lstm_es_breaches) * 100],
+            'MC_ES_Breach': [np.mean(mc_es_breaches) * 100]
         })
 
         risk_metrics_df = pd.concat([risk_metrics_df, breach_rates], ignore_index=True)
 
-        # Add COVID-19 Stress Period Analysis
+        # Create plots with Monte Carlo VaR
+        risk_plot_path = plot_risk_measures_comparison(
+                portfolio_name,
+                plot_dates,
+                plot_returns,
+                hist_vars,
+                hist_es,
+                lstm_vars,
+                lstm_es,
+                mc_vars,
+                mc_es,
+                hist_es_breaches,
+                lstm_es_breaches,
+                mc_es_breaches,
+                plots_dir
+            )
+        print(f"Saved risk measures comparison plot to: {risk_plot_path}")
+    # Add COVID-19 Stress Period Analysis
+    
         print(f"\nAnalyzing COVID-19 stress period for {portfolio_name}...")
         market_event_start = '2020-02-18'
         market_event_end = '2020-03-20'
@@ -1341,23 +1418,6 @@ def main():
             plots_dir
         )
         
-        
-        # Create plots
-        risk_plot_path = plot_risk_measures_comparison(
-            portfolio_name,
-            plot_dates,
-            plot_returns,
-            hist_vars,
-            hist_es,
-            lstm_vars,
-            lstm_es,
-            hist_es_breaches,
-            lstm_es_breaches,  # Add lstm_es_breaches
-            hist_var_breaches,  # Add hist_var_breaches
-            lstm_var_breaches,  # Add lstm_var_breaches
-            plots_dir           # Add plots_dir
-        )
-        print(f"Saved risk measures comparison plot to: {risk_plot_path}")
         
         dist_plot_path = plot_return_distributions(
             portfolio_name, 
@@ -1402,6 +1462,7 @@ def main():
                 'VaR_Breach_Rate',
                 'Avg_Historical_VaR',
                 'Avg_LSTM_VaR',
+                'Avg_MC_VaR',
                 'Returns_Volatility',
                 'Max_Loss'
             ],
@@ -1409,6 +1470,7 @@ def main():
                 summary_stats['Historical_VaR_Breach_Rate'],
                 summary_stats['Avg_Historical_VaR'],
                 summary_stats['Avg_LSTM_VaR'],
+                summary_stats['Avg_MC_VaR'],
                 summary_stats['Actual_Returns_Std'],
                 portfolio_stats['Max_Drawdown']
             ],
@@ -1416,6 +1478,7 @@ def main():
                 covid_stress_stats['Historical_VaR_Breach_Rate'],
                 covid_stress_stats['Stress_Historical_VaR_Mean'],
                 covid_stress_stats['Stress_LSTM_VaR_Mean'],
+                covid_stress_stats['Stress_MC_VaR_Mean'],
                 covid_stress_stats['Stress_Period_Returns_Std'],
                 covid_stress_stats['Stress_Period_Worst_Loss']
             ]
@@ -1442,6 +1505,10 @@ def main():
         print(f"Worst Daily Loss: {covid_stress_stats['Stress_Period_Worst_Loss']:.2%}")
         print(f"Historical VaR Change: {covid_stress_stats['Historical_VaR_Change_Pct']:.2f}%")
         print(f"LSTM VaR Change: {covid_stress_stats['LSTM_VaR_Change_Pct']:.2f}%")
+        print("\nMonte Carlo VaR Statistics:")
+        print(f"MC VaR Breach Rate: {mc_var_breaches.mean() * 100:.2f}%")
+        print(f"Average MC VaR: {mc_vars.mean():.6f}")
+        print(f"MC VaR Coverage Ratio: {(mc_var_breaches.mean() * 100) / 5.0:.2f}")
 
 
 if __name__ == "__main__":

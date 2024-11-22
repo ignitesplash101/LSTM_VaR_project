@@ -4,27 +4,27 @@ Portfolio Statistics:
 Annual_Return                  0.187836
 Annual_Volatility              0.190055
 Sharpe_Ratio                   0.988325
-Historical_VaR_Breach_Rate     5.555556
-LSTM_VaR_Breach_Rate           5.555556
+Historical_VaR_Breach_Rate     3.968254
+LSTM_VaR_Breach_Rate           3.968254
 Skewness                      -0.700786
 Excess_Kurtosis               11.510855
 Max_Drawdown                  -0.137559
 VaR_95_Historical             -0.018472
 
 Risk Metrics Summary:
-Historical_VaR_Breach_Rate        5.555556
-LSTM_VaR_Breach_Rate              5.555556
-Avg_Historical_VaR               -0.013317
-Avg_Historical_ES                -0.017230
-Avg_LSTM_VaR                     -0.017217
-Avg_LSTM_ES                      -0.021399
-LSTM_Prediction_MAE               0.008226
-LSTM_Prediction_MSE               0.000146
-LSTM_Prediction_Std               0.006147
+Historical_VaR_Breach_Rate        3.968254
+LSTM_VaR_Breach_Rate              3.968254
+Avg_Historical_VaR               -0.018974
+Avg_Historical_ES                -0.027746
+Avg_LSTM_VaR                     -0.016984
+Avg_LSTM_ES                      -0.021064
+LSTM_Prediction_MAE               0.007132
+LSTM_Prediction_MSE               0.000094
+LSTM_Prediction_Std               0.001870
 Actual_Returns_Std                0.008933
-LSTM_VaR_Coverage_Ratio           1.111111
-Historical_VaR_Coverage_Ratio     1.111111
-LSTM_ES_vs_Historical_ES_Ratio    1.241993
+LSTM_VaR_Coverage_Ratio           0.793651
+Historical_VaR_Coverage_Ratio     0.793651
+LSTM_ES_vs_Historical_ES_Ratio    0.759145
 
 Portfolio Composition:
        Stock    Weight  Risk_Contribution  Expected_Shortfall_Contribution  Weight_Percentage

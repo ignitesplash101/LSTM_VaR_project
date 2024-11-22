@@ -340,6 +340,152 @@ def generate_scenarios(model, X_test, num_scenarios=1000):
     
     return np.array(all_scenarios)
 
+def calculate_historical_var_es(returns, confidence_level=0.95, rolling_window=252):
+    """
+    Calculate daily rolling Historical VaR and ES with proper daily updates.
+    
+    Parameters:
+    returns: Array of returns
+    confidence_level: VaR confidence level (default 0.95)
+    rolling_window: Window size in days (default 252 for 1-year rolling window)
+    
+    Returns:
+    Tuple of (VaR array, ES array) with proper daily updates
+    """
+    rolling_vars = []
+    rolling_es = []
+    
+    # Cannot calculate VaR/ES until we have enough data
+    for i in range(len(returns)):
+        if i < rolling_window - 1:
+            rolling_vars.append(np.nan)
+            rolling_es.append(np.nan)
+            continue
+            
+        # Get the window of returns ending at day i
+        window = returns[i - rolling_window + 1:i + 1]
+        
+        # Calculate VaR
+        var = np.percentile(window, (1 - confidence_level) * 100)
+        rolling_vars.append(var)
+        
+        # Calculate ES (Expected Shortfall)
+        losses = window[window <= var]
+        es = np.mean(losses) if len(losses) > 0 else var
+        rolling_es.append(es)
+    
+    return np.array(rolling_vars), np.array(rolling_es)
+
+def calculate_historical_var_es(returns, confidence_level=0.95, rolling_window=252):
+    """
+    Calculate daily rolling Historical VaR and ES with proper daily updates.
+    
+    Parameters:
+    returns: Array of returns
+    confidence_level: VaR confidence level (default 0.95)
+    rolling_window: Window size in days (default 252 for 1-year rolling window)
+    
+    Returns:
+    Tuple of (VaR array, ES array, VaR breaches array, ES breaches array)
+    """
+    rolling_vars = []
+    rolling_es = []
+    var_breaches = []
+    es_breaches = []
+    
+    # Cannot calculate VaR/ES until we have enough data
+    for i in range(len(returns)):
+        if i < rolling_window - 1:
+            rolling_vars.append(np.nan)
+            rolling_es.append(np.nan)
+            var_breaches.append(False)
+            es_breaches.append(False)
+            continue
+            
+        # Get the window of returns ending at day i
+        window = returns[i - rolling_window + 1:i + 1]
+        current_return = returns[i]
+        
+        # Calculate VaR
+        var = np.percentile(window, (1 - confidence_level) * 100)
+        rolling_vars.append(var)
+        
+        # Calculate ES (Expected Shortfall)
+        losses = window[window <= var]
+        es = np.mean(losses) if len(losses) > 0 else var
+        rolling_es.append(es)
+        
+        # Calculate breaches
+        var_breaches.append(current_return < var)
+        es_breaches.append(current_return < es)
+    
+    return (np.array(rolling_vars), np.array(rolling_es), 
+            np.array(var_breaches), np.array(es_breaches))
+
+def calculate_lstm_var_es(model, X_test, scaler, actual_returns, confidence_level=0.95, num_scenarios=1000):
+    """
+    Calculate VaR and ES using LSTM predictions and Monte Carlo simulation.
+    
+    Parameters:
+    model: Trained LSTM model
+    X_test: Input sequences for prediction
+    scaler: Fitted StandardScaler for inverse transformation
+    actual_returns: Array of actual returns for breach calculation
+    confidence_level: VaR confidence level (default 0.95)
+    num_scenarios: Number of Monte Carlo scenarios (default 1000)
+    
+    Returns:
+    Tuple of (VaR array, ES array, VaR breaches array, ES breaches array, predicted returns, predicted volatility)
+    """
+    device = next(model.parameters()).device
+    X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
+    
+    vars = []
+    es_values = []
+    var_breaches = []
+    es_breaches = []
+    pred_means = []
+    pred_vols = []
+    
+    with torch.no_grad():
+        for i in range(len(X_test)):
+            # Get predictions for single sequence
+            mean, std = model(X_test_tensor[i:i+1])
+            mean = mean.cpu().numpy()
+            std = std.cpu().numpy()
+            
+            # Generate scenarios
+            scenarios = np.random.normal(mean, std, (mean.shape[0], num_scenarios))
+            scenarios = scaler.inverse_transform(scenarios.reshape(-1, 1)).reshape(mean.shape[0], num_scenarios)
+            
+            # Calculate VaR
+            var = np.percentile(scenarios, (1 - confidence_level) * 100, axis=1)[0]
+            vars.append(var)
+            
+            # Calculate ES
+            losses = scenarios[0, scenarios[0] <= var]
+            es = np.mean(losses) if len(losses) > 0 else var
+            es_values.append(es)
+            
+            # Store predictions
+            pred_mean = np.mean(scenarios, axis=1)[0]
+            pred_vol = np.std(scenarios, axis=1)[0]
+            pred_means.append(pred_mean)
+            pred_vols.append(pred_vol)
+            
+            # Calculate breaches
+            if i < len(actual_returns):
+                var_breaches.append(actual_returns[i] < var)
+                es_breaches.append(actual_returns[i] < es)
+            else:
+                var_breaches.append(False)
+                es_breaches.append(False)
+    
+    return (np.array(vars), np.array(es_values), 
+            np.array(var_breaches), np.array(es_breaches),
+            np.array(pred_means), np.array(pred_vols))
+
+
 def calculate_full_valuation_var_es(scenarios, confidence_level=0.95):
     """
     Calculate VaR and ES using full valuation method from scenarios.
@@ -366,13 +512,128 @@ def calculate_full_valuation_var_es(scenarios, confidence_level=0.95):
     
     return np.array(vars), np.array(es_values)
 
+def calculate_historical_var_es(returns, confidence_level=0.95, rolling_window=252):
+    """
+    Calculate daily rolling Historical VaR and ES with proper daily updates.
+    
+    Parameters:
+    returns: Array of returns
+    confidence_level: VaR confidence level (default 0.95)
+    rolling_window: Window size in days (default 252 for 1-year rolling window)
+    
+    Returns:
+    Tuple of (VaR array, ES array) with proper daily updates
+    """
+    rolling_vars = []
+    rolling_es = []
+    
+    # Cannot calculate VaR/ES until we have enough data
+    for i in range(len(returns)):
+        if i < rolling_window - 1:
+            rolling_vars.append(np.nan)
+            rolling_es.append(np.nan)
+            continue
+            
+        # Get the window of returns ending at day i
+        window = returns[i - rolling_window + 1:i + 1]
+        
+        # Calculate VaR
+        var = np.percentile(window, (1 - confidence_level) * 100)
+        rolling_vars.append(var)
+        
+        # Calculate ES (Expected Shortfall)
+        losses = window[window <= var]
+        es = np.mean(losses) if len(losses) > 0 else var
+        rolling_es.append(es)
+    
+    return np.array(rolling_vars), np.array(rolling_es)
+
+def calculate_lstm_var_es(model, X_test, scaler, confidence_level=0.95, num_scenarios=1000):
+    """
+    Calculate VaR and ES using LSTM predictions and Monte Carlo simulation.
+    
+    Parameters:
+    model: Trained LSTM model
+    X_test: Input sequences for prediction
+    scaler: Fitted StandardScaler for inverse transformation
+    confidence_level: VaR confidence level (default 0.95)
+    num_scenarios: Number of Monte Carlo scenarios (default 1000)
+    
+    Returns:
+    Tuple of (VaR array, ES array, predicted returns, predicted volatility)
+    """
+    device = next(model.parameters()).device
+    X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
+    
+    vars = []
+    es_values = []
+    pred_means = []
+    pred_vols = []
+    
+    with torch.no_grad():
+        for i in range(len(X_test)):
+            # Get predictions for single sequence
+            mean, std = model(X_test_tensor[i:i+1])
+            mean = mean.cpu().numpy()
+            std = std.cpu().numpy()
+            
+            # Generate scenarios
+            scenarios = np.random.normal(mean, std, (mean.shape[0], num_scenarios))
+            scenarios = scaler.inverse_transform(scenarios.reshape(-1, 1)).reshape(mean.shape[0], num_scenarios)
+            
+            # Calculate VaR
+            var = np.percentile(scenarios, (1 - confidence_level) * 100, axis=1)[0]
+            vars.append(var)
+            
+            # Calculate ES
+            losses = scenarios[0, scenarios[0] <= var]
+            es = np.mean(losses) if len(losses) > 0 else var
+            es_values.append(es)
+            
+            # Store predictions
+            pred_mean = np.mean(scenarios, axis=1)[0]
+            pred_vol = np.std(scenarios, axis=1)[0]
+            pred_means.append(pred_mean)
+            pred_vols.append(pred_vol)
+    
+    return (np.array(vars), np.array(es_values), 
+            np.array(pred_means), np.array(pred_vols))
+
 def analyze_portfolio_var(returns_df, weights, sequence_length=252, backtest_days=378,
                         confidence_level=0.95, rolling_window=252, num_scenarios=1000):
     """
-    Modified portfolio analysis function using full valuation VaR for LSTM predictions.
+    Combined portfolio analysis using both Historical and LSTM VaR methods.
     """
     # Calculate portfolio returns
     portfolio_returns = calculate_portfolio_returns(returns_df, weights)
+    
+    # Get the test period returns
+    test_returns = portfolio_returns[-backtest_days:]
+    
+    # Calculate Historical VaR and ES first for the entire test period
+    hist_vars = []
+    hist_es = []
+    
+    # Calculate rolling VaR for each point in the test period
+    for i in range(backtest_days):
+        if i < rolling_window:
+            # Use all available data up to this point
+            window = portfolio_returns[-(i+rolling_window):(-i if i > 0 else None)]
+        else:
+            # Use rolling window
+            window = portfolio_returns[-(i+rolling_window):-i]
+            
+        # Calculate VaR and ES
+        var = np.percentile(window, (1 - confidence_level) * 100)
+        losses = window[window <= var]
+        es = np.mean(losses) if len(losses) > 0 else var
+        
+        hist_vars.append(var)
+        hist_es.append(es)
+    
+    # Reverse the arrays since we calculated them backwards
+    hist_vars = np.array(hist_vars)[::-1]
+    hist_es = np.array(hist_es)[::-1]
     
     # Scale returns for LSTM training
     scaler = StandardScaler()
@@ -386,10 +647,15 @@ def analyze_portfolio_var(returns_df, weights, sequence_length=252, backtest_day
     X_train, y_train = create_sequences(train_data, sequence_length)
     X_test, y_test = create_sequences(test_data, sequence_length)
     
+    # Split into training and validation sets
+    val_size = min(len(X_train) // 5, 50)
+    X_val, y_val = X_train[-val_size:], y_train[-val_size:]
+    X_train, y_train = X_train[:-val_size], y_train[:-val_size]
+    
     # Train LSTM model
     model = train_lstm_model(
         X_train, y_train,
-        X_test, y_test,
+        X_val, y_val,
         hidden_dim=100,
         num_layers=2,
         batch_size=32,
@@ -399,65 +665,47 @@ def analyze_portfolio_var(returns_df, weights, sequence_length=252, backtest_day
     
     # Generate scenarios for LSTM predictions
     scenarios = generate_scenarios(model, X_test, num_scenarios)
+    scenarios = scaler.inverse_transform(scenarios.reshape(-1, num_scenarios))
     
     # Calculate LSTM VaR and ES using full valuation method
     lstm_vars, lstm_es = calculate_full_valuation_var_es(
         scenarios, confidence_level
     )
     
-    # Unscale the VaR and ES values
-    lstm_vars = scaler.inverse_transform(lstm_vars.reshape(-1, 1)).flatten()
-    lstm_es = scaler.inverse_transform(lstm_es.reshape(-1, 1)).flatten()
-    
     # Get predicted returns (mean of scenarios)
     predicted_returns = np.mean(scenarios, axis=1)
-    predicted_returns = scaler.inverse_transform(predicted_returns.reshape(-1, 1)).flatten()
     
-    # Calculate historical VaR and ES
-    test_returns = portfolio_returns[-backtest_days:]
-    hist_vars = []
-    hist_es = []
+    # Calculate breaches
+    actual_returns = test_returns[sequence_length:]
+    hist_vars_aligned = hist_vars[sequence_length:]
+    hist_es_aligned = hist_es[sequence_length:]
     
-    # Make sure we have enough data for the first window
-    if len(test_returns) < rolling_window:
-        rolling_window = len(test_returns)
+    # Calculate breaches for both methods
+    hist_var_breaches = actual_returns < hist_vars_aligned
+    lstm_var_breaches = actual_returns < lstm_vars
+    hist_es_breaches = actual_returns < hist_es_aligned
+    lstm_es_breaches = actual_returns < lstm_es
     
-    # Calculate rolling VaR and ES
-    for i in range(sequence_length - 1, len(test_returns)):
-        # Ensure we have enough history for the window
-        start_idx = max(0, i - rolling_window + 1)
-        window = test_returns[start_idx:i + 1]
-        
-        if len(window) > 0:  # Check if window has data
-            var = np.percentile(window, (1 - confidence_level) * 100)
-            losses = window[window <= var]
-            es = np.mean(losses) if len(losses) > 0 else var
-        else:
-            # Use the previous values if window is empty
-            var = hist_vars[-1] if hist_vars else 0
-            es = hist_es[-1] if hist_es else 0
-            
-        hist_vars.append(var)
-        hist_es.append(es)
+    # Align lengths of all arrays
+    min_len = min(len(actual_returns), len(hist_vars_aligned),
+                 len(hist_es_aligned), len(lstm_vars),
+                 len(lstm_es))
     
-    hist_vars = np.array(hist_vars)
-    hist_es = np.array(hist_es)
+    predicted_returns = predicted_returns[:min_len]
+    hist_vars = hist_vars_aligned[:min_len]
+    hist_es = hist_es_aligned[:min_len]
+    lstm_vars = lstm_vars[:min_len]
+    lstm_es = lstm_es[:min_len]
+    hist_var_breaches = hist_var_breaches[:min_len]
+    lstm_var_breaches = lstm_var_breaches[:min_len]
+    hist_es_breaches = hist_es_breaches[:min_len]
+    lstm_es_breaches = lstm_es_breaches[:min_len]
     
-    # Align the length of all arrays
-    min_len = min(len(predicted_returns), len(hist_vars), len(hist_es), len(lstm_vars), len(lstm_es))
-    predicted_returns = predicted_returns[-min_len:]
-    hist_vars = hist_vars[-min_len:]
-    hist_es = hist_es[-min_len:]
-    lstm_vars = lstm_vars[-min_len:]
-    lstm_es = lstm_es[-min_len:]
-    
-    # Calculate breaches using aligned data
-    test_returns = test_returns[-(min_len + sequence_length - 1):][-min_len:]  # Align with other arrays
-    hist_es_breaches = test_returns < hist_es
-    lstm_es_breaches = test_returns < lstm_es
-    
-    return predicted_returns, hist_vars, hist_es, lstm_vars, lstm_es, hist_es_breaches, lstm_es_breaches
+    return (predicted_returns, hist_vars, hist_es, lstm_vars, 
+            lstm_es, hist_es_breaches, lstm_es_breaches,
+            hist_var_breaches, lstm_var_breaches)
 
+    
 def plot_risk_measures_comparison(portfolio_id, dates, returns, hist_vars, hist_es, 
                                   lstm_vars, lstm_es, hist_es_breaches, lstm_es_breaches,
                                   hist_var_breaches, lstm_var_breaches, plots_dir):
@@ -1000,13 +1248,14 @@ def main():
         
         # Calculate portfolio returns and risk metrics
         portfolio_returns = calculate_portfolio_returns(returns_df, weights)
-        predicted_returns, hist_vars, hist_es, lstm_vars, lstm_es, hist_es_breaches, lstm_es_breaches = analyze_portfolio_var(
-            returns_df, weights, 
-            backtest_days=backtest_days,
-            confidence_level=confidence_level, 
-            rolling_window=rolling_window,
-            num_scenarios=1000  # Optional: explicitly specify number of scenarios
-        )
+        predicted_returns, hist_vars, hist_es, lstm_vars, lstm_es, \
+            hist_es_breaches, lstm_es_breaches, hist_var_breaches, lstm_var_breaches = analyze_portfolio_var(
+                returns_df, weights, 
+                backtest_days=backtest_days,
+                confidence_level=confidence_level, 
+                rolling_window=rolling_window,
+                num_scenarios=1000
+            )
         
         # Prepare data for plotting
         plot_dates = dates[-backtest_days:]
