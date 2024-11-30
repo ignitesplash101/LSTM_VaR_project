@@ -17,88 +17,92 @@ from risk_metrics import calculate_full_valuation_var_es, calculate_full_valuati
 
 def analyze_portfolio_var(returns_df, weights, sequence_length=252, backtest_days=378,
                         confidence_level=0.95, rolling_window=252, num_scenarios=1000):
-   """Combined portfolio analysis using Historical, Monte Carlo and LSTM VaR methods."""
-   # Calculate portfolio returns
-   portfolio_returns = calculate_portfolio_returns(returns_df, weights)
-   test_returns = portfolio_returns[-backtest_days:]
-   
-   # Calculate Historical VaR and ES for full period
-   hist_vars, hist_es = calculate_historical_var_es(portfolio_returns, confidence_level, rolling_window)
-   # Take the last backtest_days points
-   hist_vars = hist_vars[-backtest_days:]
-   hist_es = hist_es[-backtest_days:]
-   
-   # Calculate Monte Carlo VaR
-   mc_vars = []
-   mc_es = []
-   mc_scenarios = []
-
-   for i in range(len(test_returns)):
-       end_idx = len(returns_df) - backtest_days + i
-       start_idx = end_idx - rolling_window
-       window_risk_factors = returns_df.iloc[start_idx:end_idx].values
-       
-       var, es, scenarios = calculate_full_valuation_montecarlo_var_es(
-           risk_factors=window_risk_factors,
-           weights=weights,
-           confidence_level=confidence_level,
-           num_scenarios=num_scenarios
-       )
-       mc_vars.append(var)
-       mc_es.append(es)
-       mc_scenarios.append(scenarios)
-   
-   # LSTM setup and training
-   scaler = StandardScaler()
-   scaled_returns = scaler.fit_transform(portfolio_returns.reshape(-1, 1)).flatten()
-   train_data = scaled_returns[:-backtest_days]
-   test_data = scaled_returns[-backtest_days:]
-   
-   X_train, y_train = create_sequences(train_data, sequence_length)
-   X_test, y_test = create_sequences(test_data, sequence_length)
-   
-   val_size = min(len(X_train) // 5, 50)
-   X_val, y_val = X_train[-val_size:], y_train[-val_size:]
-   X_train, y_train = X_train[:-val_size], y_train[:-val_size]
-   
-   model = train_lstm_model(X_train, y_train, X_val, y_val)
-   scenarios = generate_scenarios(model, X_test, num_scenarios)
-   scenarios = scaler.inverse_transform(scenarios.reshape(-1, num_scenarios))
-   
-   lstm_vars, lstm_es = calculate_full_valuation_var_es(scenarios, confidence_level)
-   predicted_returns = np.mean(scenarios, axis=1)
-   
-   # Calculate breaches and align lengths
-   actual_returns = test_returns[sequence_length:]
-   hist_vars_aligned = hist_vars[sequence_length:]
-   hist_es_aligned = hist_es[sequence_length:]
-   mc_vars = np.array(mc_vars)[sequence_length:]
-   mc_es = np.array(mc_es)[sequence_length:]
-   
-   hist_var_breaches = actual_returns < hist_vars_aligned
-   lstm_var_breaches = actual_returns < lstm_vars
-   mc_var_breaches = actual_returns < mc_vars
-   hist_es_breaches = actual_returns < hist_es_aligned
-   lstm_es_breaches = actual_returns < lstm_es
-   mc_es_breaches = actual_returns < mc_es
-   
-   min_len = min(len(actual_returns), len(hist_vars_aligned),
+    """Combined portfolio analysis using Historical, Monte Carlo and LSTM VaR methods."""
+    # Calculate portfolio returns
+    portfolio_returns = calculate_portfolio_returns(returns_df, weights)
+    test_returns = portfolio_returns[-backtest_days:]
+    
+    # Calculate Historical VaR and ES for full period
+    hist_vars, hist_es = calculate_historical_var_es(portfolio_returns, confidence_level, rolling_window)
+    # Take the last backtest_days points
+    hist_vars = hist_vars[-backtest_days:]
+    hist_es = hist_es[-backtest_days:]
+    
+    # Calculate Monte Carlo VaR
+    mc_vars = []
+    mc_es = []
+    mc_scenarios = []
+    
+    for i in range(len(test_returns)):
+        end_idx = len(returns_df) - backtest_days + i
+        start_idx = end_idx - rolling_window
+        window_risk_factors = returns_df.iloc[start_idx:end_idx].values
+        
+        var, es, scenarios = calculate_full_valuation_montecarlo_var_es(
+            risk_factors=window_risk_factors,
+            weights=weights,
+            confidence_level=confidence_level,
+            num_scenarios=num_scenarios
+        )
+        mc_vars.append(var)
+        mc_es.append(es)
+        mc_scenarios.append(scenarios)
+    
+    # LSTM setup and training
+    scaler = StandardScaler()
+    scaled_returns = scaler.fit_transform(portfolio_returns.reshape(-1, 1)).flatten()
+    train_data = scaled_returns[:-backtest_days]
+    test_data = scaled_returns[-backtest_days:]
+    
+    X_train, y_train = create_sequences(train_data, sequence_length)
+    X_test, y_test = create_sequences(test_data, sequence_length)
+    
+    val_size = min(len(X_train) // 5, 50)
+    X_val, y_val = X_train[-val_size:], y_train[-val_size:]
+    X_train, y_train = X_train[:-val_size], y_train[:-val_size]
+    
+    model = train_lstm_model(X_train, y_train, X_val, y_val)
+    scenarios = generate_scenarios(model, X_test, num_scenarios)
+    scenarios = scaler.inverse_transform(scenarios.reshape(-1, num_scenarios))
+    
+    lstm_vars, lstm_es = calculate_full_valuation_var_es(scenarios, confidence_level)
+    predicted_returns = np.mean(scenarios, axis=1)
+    
+    # Calculate breaches and align lengths
+    actual_returns = test_returns[sequence_length:]
+    hist_vars_aligned = hist_vars[sequence_length:]
+    hist_es_aligned = hist_es[sequence_length:]
+    mc_vars = np.array(mc_vars)[sequence_length:]
+    mc_es = np.array(mc_es)[sequence_length:]
+    
+    hist_var_breaches = actual_returns < hist_vars_aligned
+    lstm_var_breaches = actual_returns < lstm_vars
+    mc_var_breaches = actual_returns < mc_vars
+    hist_es_breaches = actual_returns < hist_es_aligned
+    lstm_es_breaches = actual_returns < lstm_es
+    mc_es_breaches = actual_returns < mc_es
+    
+    min_len = min(len(actual_returns), len(hist_vars_aligned),
                 len(hist_es_aligned), len(lstm_vars), len(lstm_es),
                 len(mc_vars), len(mc_es))
-   
-   return (predicted_returns[:min_len], 
-           hist_vars_aligned[:min_len], 
-           hist_es_aligned[:min_len], 
-           lstm_vars[:min_len], 
-           lstm_es[:min_len],
-           mc_vars[:min_len],
-           mc_es[:min_len],
-           hist_es_breaches[:min_len], 
-           lstm_es_breaches[:min_len],
-           mc_es_breaches[:min_len],
-           hist_var_breaches[:min_len], 
-           lstm_var_breaches[:min_len],
-           mc_var_breaches[:min_len])
+    
+    # Return original metrics plus model, X_test, and scaler
+    return (predicted_returns[:min_len], 
+            hist_vars_aligned[:min_len], 
+            hist_es_aligned[:min_len], 
+            lstm_vars[:min_len], 
+            lstm_es[:min_len],
+            mc_vars[:min_len],
+            mc_es[:min_len],
+            hist_es_breaches[:min_len], 
+            lstm_es_breaches[:min_len],
+            mc_es_breaches[:min_len],
+            hist_var_breaches[:min_len], 
+            lstm_var_breaches[:min_len],
+            mc_var_breaches[:min_len],
+            model,  # Added model
+            X_test,  # Added X_test
+            scaler)  # Added scaler for inverse transformations
     
 def analyze_covid_stress_period(returns_df, weights, market_event_start='2020-02-18', 
                                 market_event_end='2020-03-20', rolling_window=252,

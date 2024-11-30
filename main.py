@@ -6,7 +6,7 @@ import random
 from scipy import stats
 from data_processing import create_pca_portfolios, calculate_portfolio_returns
 from portfolio_analysis import analyze_portfolio_var, analyze_covid_stress_period
-from visualization import plot_return_distributions, plot_risk_measures_comparison, plot_stress_period_analysis_covid
+from visualization import plot_return_distributions, plot_risk_measures_comparison, plot_stress_period_analysis_covid, plot_lstm_analysis
 
 def set_seeds(seed=42):
     """Set random seeds for reproducibility."""
@@ -85,13 +85,13 @@ def main():
         predicted_returns, hist_vars, hist_es, lstm_vars, lstm_es, \
         mc_vars, mc_es, hist_es_breaches, lstm_es_breaches, \
         mc_es_breaches, hist_var_breaches, lstm_var_breaches, \
-        mc_var_breaches = analyze_portfolio_var(
-                returns_df, weights, 
-                backtest_days=backtest_days,
-                confidence_level=confidence_level, 
-                rolling_window=rolling_window,
-                num_scenarios=num_scenarios
-            )
+        mc_var_breaches, model, X_test, scaler = analyze_portfolio_var(
+            returns_df, weights, 
+            backtest_days=backtest_days,
+            confidence_level=confidence_level, 
+            rolling_window=rolling_window,
+            num_scenarios=num_scenarios
+        )
         
         # Prepare data for plotting
         plot_dates = dates[-backtest_days:]
@@ -249,6 +249,16 @@ def main():
         )
         print(f"Saved distribution analysis to: {dist_plot_path}")
 
+        lstm_analysis_path = plot_lstm_analysis(
+            model,  # You'll need to pass the trained model from analyze_portfolio_var
+            X_test,  # Pass the test sequences from analyze_portfolio_var
+            plot_returns,
+            plot_dates,
+            portfolio_name,
+            plots_dir
+        )
+        print(f"Saved LSTM analysis to: {lstm_analysis_path}")
+        
         # Save results
         portfolio_id = portfolio_name.replace(" ", "_").replace("(", "").replace(")", "")
 

@@ -304,3 +304,109 @@ def plot_return_distributions(portfolio_id, predicted_returns, actual_returns, p
     plt.close()
     
     return save_path
+
+def plot_lstm_analysis(model, X_test, actual_returns, dates, portfolio_name, plots_dir):
+    """
+    LSTM analysis plots with predicted volatility only.
+    """
+    fig = plt.figure(figsize=(20, 15))
+    gs = fig.add_gridspec(3, 2)
+
+    # 1. Temporal Sensitivity Analysis
+    ax1 = fig.add_subplot(gs[0, :])
+    device = next(model.parameters()).device
+    X_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
+    
+    with torch.no_grad():
+        base_mean, base_std = model(X_tensor)
+        base_mean = base_mean.cpu().numpy()
+        base_std = base_std.cpu().numpy()
+        
+        # Calculate sensitivity up to 6 months
+        sensitivities = []
+        window_sizes = [5, 21, 63, 126]  # 1 week, 1 month, 3 months, 6 months
+        window_labels = ['1 week', '1 month', '3 months', '6 months']
+        
+        for window in window_sizes:
+            window_sensitivity = []
+            for i in range(len(X_test)):
+                perturbed = X_test[i].copy()
+                perturbed[-window:] *= 1.01  # 1% shock to recent data
+                
+                perturbed_tensor = torch.tensor(perturbed.reshape(1, -1, 1), 
+                                              dtype=torch.float32).to(device)
+                shock_mean, shock_std = model(perturbed_tensor)
+                
+                mean_change = float(abs((shock_mean.cpu().numpy() - base_mean[i]) / base_mean[i]))
+                std_change = float(abs((shock_std.cpu().numpy() - base_std[i]) / base_std[i]))
+                window_sensitivity.append(mean_change + std_change)
+            
+            sensitivities.append(np.mean(window_sensitivity) * 100)
+    
+    # Plot bar chart
+    bars = ax1.bar(window_labels, sensitivities, alpha=0.7)
+    ax1.set_title('LSTM Sensitivity to Historical Data Windows')
+    ax1.set_xlabel('Window Size')
+    ax1.set_ylabel('Average Prediction Change (%)')
+    
+    for bar in bars:
+        height = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.1f}%',
+                ha='center', va='bottom')
+    
+    ax1.grid(True, alpha=0.3)
+
+    # 2. Volatility Analysis - Predicted only
+    ax2 = fig.add_subplot(gs[1, 0])
+    
+    # Calculate predicted volatility
+    predicted_vol = (base_std.squeeze() 
+                    * np.sqrt(252)  # Annualization factor
+                    * 100)  # Convert to percentage
+    
+    valid_dates = dates[-len(predicted_vol):]
+    
+    ax2.plot(valid_dates, predicted_vol, 
+             label='LSTM Predicted Volatility', alpha=0.7, color='blue')
+    ax2.set_title('LSTM Predicted Volatility (Annualized %)')
+    ax2.set_xlabel('Date')
+    ax2.set_ylabel('Annualized Volatility (%)')
+    ax2.legend()
+    ax2.grid(True, alpha=0.3)
+
+    # 3. Prediction Error Analysis
+    ax3 = fig.add_subplot(gs[1, 1])
+    pred_error = base_mean.squeeze() - actual_returns[-len(base_mean):]
+    
+    ax3.scatter(actual_returns[-len(pred_error):], pred_error, 
+                alpha=0.5, label='Prediction Errors')
+    ax3.axhline(y=0, color='r', linestyle='--', alpha=0.5)
+    ax3.set_title('LSTM Prediction Errors vs Returns')
+    ax3.set_xlabel('Actual Returns')
+    ax3.set_ylabel('Prediction Error')
+    ax3.legend()
+    ax3.grid(True, alpha=0.3)
+
+    # 4. Market Regime Analysis
+    ax4 = fig.add_subplot(gs[2, :])
+    valid_rolling_vol = pd.Series(actual_returns).rolling(21).std()[-len(pred_error):]
+    vol_regimes = pd.qcut(valid_rolling_vol, q=3, labels=['Low', 'Medium', 'High'])
+    regime_errors = {}
+    
+    for regime in ['Low', 'Medium', 'High']:
+        mask = vol_regimes == regime
+        regime_errors[regime] = np.mean(np.abs(pred_error[mask]))
+    
+    ax4.bar(regime_errors.keys(), regime_errors.values(), alpha=0.7)
+    ax4.set_title('LSTM Prediction Error by Volatility Regime')
+    ax4.set_xlabel('Volatility Regime')
+    ax4.set_ylabel('Mean Absolute Error')
+    ax4.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+    save_path = os.path.join(plots_dir, f"{portfolio_name}_lstm_analysis.png")
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    return save_path
