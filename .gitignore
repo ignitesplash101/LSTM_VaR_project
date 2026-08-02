@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+.venv/
+venv/
+
+# Tooling
+.pytest_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Local system files
+.DS_Store
+Thumbs.db
+
+# New checkpoints are local unless deliberately added as an experiment artifact.
+best_model*.pth
